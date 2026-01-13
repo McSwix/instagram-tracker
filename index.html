@@ -1,288 +1,309 @@
-import React, { useState } from 'react';
-import { Upload, Users, UserMinus, UserPlus, TrendingUp, RefreshCw } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Follower Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .tab-active {
+            border-bottom: 2px solid #8B5CF6;
+            color: #8B5CF6;
+        }
+        .tab-inactive {
+            color: #6B7280;
+        }
+        .tab-inactive:hover {
+            color: #1F2937;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+    <div id="app"></div>
 
-export default function InstagramDashboard() {
-  const [followers, setFollowers] = useState([]);
-  const [following, setFollowing] = useState([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+    <script>
+        let followers = [];
+        let following = [];
+        let isLoaded = false;
+        let activeTab = 'overview';
 
-  const parseFollowersFile = (jsonData) => {
-    try {
-      const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-      return data.map(item => ({
-        username: item.string_list_data[0]?.value,
-        href: item.string_list_data[0]?.href,
-        timestamp: item.string_list_data[0]?.timestamp
-      })).filter(item => item.username);
-    } catch (error) {
-      console.error('Error parsing followers file:', error);
-      return [];
-    }
-  };
+        function parseFollowersFile(jsonData) {
+            try {
+                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+                return data.map(item => ({
+                    username: item.string_list_data[0]?.value,
+                    href: item.string_list_data[0]?.href,
+                    timestamp: item.string_list_data[0]?.timestamp
+                })).filter(item => item.username);
+            } catch (error) {
+                console.error('Error parsing followers file:', error);
+                alert('Error parsing followers file. Please make sure it is the correct format.');
+                return [];
+            }
+        }
 
-  const parseFollowingFile = (jsonData) => {
-    try {
-      const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-      const relationshipsFollowing = data.relationships_following || data;
-      return relationshipsFollowing.map(item => ({
-        username: item.title,
-        href: item.string_list_data[0]?.href,
-        timestamp: item.string_list_data[0]?.timestamp
-      })).filter(item => item.username);
-    } catch (error) {
-      console.error('Error parsing following file:', error);
-      return [];
-    }
-  };
+        function parseFollowingFile(jsonData) {
+            try {
+                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+                const relationshipsFollowing = data.relationships_following || data;
+                return relationshipsFollowing.map(item => ({
+                    username: item.title,
+                    href: item.string_list_data[0]?.href,
+                    timestamp: item.string_list_data[0]?.timestamp
+                })).filter(item => item.username);
+            } catch (error) {
+                console.error('Error parsing following file:', error);
+                alert('Error parsing following file. Please make sure it is the correct format.');
+                return [];
+            }
+        }
 
-  const handleFileUpload = async (event, fileType) => {
-    const file = event.target.files[0];
-    if (!file) return;
+        function handleFileUpload(event, fileType) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target.result;
-      if (fileType === 'followers') {
-        const parsed = parseFollowersFile(content);
-        setFollowers(parsed);
-      } else {
-        const parsed = parseFollowingFile(content);
-        setFollowing(parsed);
-      }
-    };
-    reader.readAsText(file);
-  };
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                if (fileType === 'followers') {
+                    followers = parseFollowersFile(content);
+                    if (followers.length > 0 && following.length > 0) {
+                        isLoaded = true;
+                    }
+                } else {
+                    following = parseFollowingFile(content);
+                    if (followers.length > 0 && following.length > 0) {
+                        isLoaded = true;
+                    }
+                }
+                render();
+            };
+            reader.readAsText(file);
+        }
 
-  React.useEffect(() => {
-    if (followers.length > 0 && following.length > 0) {
-      setIsLoaded(true);
-    }
-  }, [followers, following]);
+        function resetApp() {
+            followers = [];
+            following = [];
+            isLoaded = false;
+            activeTab = 'overview';
+            render();
+        }
 
-  const followerUsernames = new Set(followers.map(f => f.username));
-  const followingUsernames = new Set(following.map(f => f.username));
+        function setTab(tab) {
+            activeTab = tab;
+            render();
+        }
 
-  const notFollowingBack = following.filter(f => !followerUsernames.has(f.username));
-  const notFollowedBack = followers.filter(f => !followingUsernames.has(f.username));
-  const mutualFollowers = following.filter(f => followerUsernames.has(f.username));
+        function getAnalysis() {
+            const followerUsernames = new Set(followers.map(f => f.username));
+            const followingUsernames = new Set(following.map(f => f.username));
 
-  const StatCard = ({ title, value, icon: Icon, color }) => (
-    <div className="bg-white rounded-lg shadow p-6 border-l-4" style={{ borderLeftColor: color }}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-500 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold mt-2">{value}</p>
-        </div>
-        <Icon className="w-12 h-12 opacity-20" style={{ color }} />
-      </div>
-    </div>
-  );
+            return {
+                notFollowingBack: following.filter(f => !followerUsernames.has(f.username)),
+                notFollowedBack: followers.filter(f => !followingUsernames.has(f.username)),
+                mutualFollowers: following.filter(f => followerUsernames.has(f.username))
+            };
+        }
 
-  const UserList = ({ users, title, emptyMessage, showUnfollow = false }) => (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-4 border-b">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-gray-500 mt-1">{users.length} accounts</p>
-      </div>
-      <div className="p-4 max-h-96 overflow-y-auto">
-        {users.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">{emptyMessage}</p>
-        ) : (
-          <div className="space-y-2">
-            {users.map((user, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition">
-                <a 
-                  href={user.href} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  @{user.username}
-                </a>
-                {showUnfollow && (
-                  <a
-                    href={`https://www.instagram.com/${user.username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm bg-red-50 text-red-600 px-3 py-1 rounded hover:bg-red-100 transition"
-                  >
-                    View Profile
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+        function renderUploadScreen() {
+            return `
+                <div class="p-8">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="text-center mb-8">
+                            <h1 class="text-4xl font-bold text-gray-800 mb-2">Instagram Follower Manager</h1>
+                            <p class="text-gray-600">Upload your Instagram data files to get started</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-lg p-8">
+                            <div class="space-y-6">
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-400 transition">
+                                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    <label class="block cursor-pointer">
+                                        <span class="text-lg font-semibold text-gray-700">Upload followers_1.json</span>
+                                        <p class="text-sm text-gray-500 mt-1">People who follow you</p>
+                                        <input
+                                            type="file"
+                                            accept=".json"
+                                            onchange="handleFileUpload(event, 'followers')"
+                                            class="mt-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer"
+                                        />
+                                    </label>
+                                    ${followers.length > 0 ? `<p class="text-green-600 mt-2 font-medium">✓ Loaded ${followers.length} followers</p>` : ''}
+                                </div>
 
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">Instagram Follower Manager</h1>
-            <p className="text-gray-600">Upload your Instagram data files to get started</p>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="space-y-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-400 transition">
-                <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <label className="block">
-                  <span className="text-lg font-semibold text-gray-700">Upload followers_1.json</span>
-                  <p className="text-sm text-gray-500 mt-1">People who follow you</p>
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={(e) => handleFileUpload(e, 'followers')}
-                    className="mt-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
-                  />
-                </label>
-                {followers.length > 0 && (
-                  <p className="text-green-600 mt-2 font-medium">✓ Loaded {followers.length} followers</p>
-                )}
-              </div>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-pink-400 transition">
+                                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    <label class="block cursor-pointer">
+                                        <span class="text-lg font-semibold text-gray-700">Upload following.json</span>
+                                        <p class="text-sm text-gray-500 mt-1">People you follow</p>
+                                        <input
+                                            type="file"
+                                            accept=".json"
+                                            onchange="handleFileUpload(event, 'following')"
+                                            class="mt-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 cursor-pointer"
+                                        />
+                                    </label>
+                                    ${following.length > 0 ? `<p class="text-green-600 mt-2 font-medium">✓ Loaded ${following.length} following</p>` : ''}
+                                </div>
+                            </div>
 
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-pink-400 transition">
-                <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <label className="block">
-                  <span className="text-lg font-semibold text-gray-700">Upload following.json</span>
-                  <p className="text-sm text-gray-500 mt-1">People you follow</p>
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={(e) => handleFileUpload(e, 'following')}
-                    className="mt-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
-                  />
-                </label>
-                {following.length > 0 && (
-                  <p className="text-green-600 mt-2 font-medium">✓ Loaded {following.length} following</p>
-                )}
-              </div>
-            </div>
+                            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                <p class="text-sm text-blue-800">
+                                    <strong>How to get your files:</strong> Go to Instagram Settings → Security → Download Your Information → Request Download (JSON format)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>How to get your files:</strong> Go to Instagram Settings → Security → Download Your Information → Request Download (JSON format)
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+        function renderStatCard(title, value, color) {
+            return `
+                <div class="bg-white rounded-lg shadow p-6 border-l-4" style="border-left-color: ${color}">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">${title}</p>
+                            <p class="text-3xl font-bold mt-2">${value}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-800">Instagram Dashboard</h1>
-            <p className="text-gray-600 mt-1">Manage your followers and following</p>
-          </div>
-          <button
-            onClick={() => {
-              setFollowers([]);
-              setFollowing([]);
-              setIsLoaded(false);
-            }}
-            className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow hover:shadow-md transition"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Upload New Files
-          </button>
-        </div>
+        function renderUserList(users, title, emptyMessage, showViewProfile) {
+            if (!showViewProfile) showViewProfile = false;
+            
+            return `
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b">
+                        <h3 class="text-lg font-semibold">${title}</h3>
+                        <p class="text-sm text-gray-500 mt-1">${users.length} accounts</p>
+                    </div>
+                    <div class="p-4 max-h-96 overflow-y-auto">
+                        ${users.length === 0 ? `
+                            <p class="text-gray-400 text-center py-8">${emptyMessage}</p>
+                        ` : `
+                            <div class="space-y-2">
+                                ${users.map(user => `
+                                    <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition">
+                                        <a 
+                                            href="${user.href}" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            class="text-blue-600 hover:text-blue-800 font-medium"
+                                        >
+                                            @${user.username}
+                                        </a>
+                                        ${showViewProfile ? `
+                                            <a
+                                                href="https://www.instagram.com/${user.username}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="text-sm bg-red-50 text-red-600 px-3 py-1 rounded hover:bg-red-100 transition"
+                                            >
+                                                View Profile
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard 
-            title="Followers" 
-            value={followers.length} 
-            icon={Users}
-            color="#8B5CF6"
-          />
-          <StatCard 
-            title="Following" 
-            value={following.length} 
-            icon={TrendingUp}
-            color="#EC4899"
-          />
-          <StatCard 
-            title="Not Following Back" 
-            value={notFollowingBack.length} 
-            icon={UserMinus}
-            color="#EF4444"
-          />
-          <StatCard 
-            title="Mutual Followers" 
-            value={mutualFollowers.length} 
-            icon={UserPlus}
-            color="#10B981"
-          />
-        </div>
+        function renderDashboard() {
+            const analysis = getAnalysis();
+            
+            return `
+                <div class="p-8">
+                    <div class="max-w-7xl mx-auto">
+                        <div class="flex items-center justify-between mb-8">
+                            <div>
+                                <h1 class="text-4xl font-bold text-gray-800">Instagram Dashboard</h1>
+                                <p class="text-gray-600 mt-1">Manage your followers and following</p>
+                            </div>
+                            <button
+                                onclick="resetApp()"
+                                class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow hover:shadow-md transition"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Upload New Files
+                            </button>
+                        </div>
 
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="flex border-b">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-6 py-3 font-medium transition ${
-                activeTab === 'overview' 
-                  ? 'border-b-2 border-purple-500 text-purple-600' 
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              Not Following Back
-            </button>
-            <button
-              onClick={() => setActiveTab('notFollowed')}
-              className={`px-6 py-3 font-medium transition ${
-                activeTab === 'notFollowed' 
-                  ? 'border-b-2 border-purple-500 text-purple-600' 
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              Don't Follow Back
-            </button>
-            <button
-              onClick={() => setActiveTab('mutual')}
-              className={`px-6 py-3 font-medium transition ${
-                activeTab === 'mutual' 
-                  ? 'border-b-2 border-purple-500 text-purple-600' 
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              Mutual Followers
-            </button>
-          </div>
-        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            ${renderStatCard('Followers', followers.length, '#8B5CF6')}
+                            ${renderStatCard('Following', following.length, '#EC4899')}
+                            ${renderStatCard('Not Following Back', analysis.notFollowingBack.length, '#EF4444')}
+                            ${renderStatCard('Mutual Followers', analysis.mutualFollowers.length, '#10B981')}
+                        </div>
 
-        {activeTab === 'overview' && (
-          <UserList 
-            users={notFollowingBack}
-            title="People You Follow Who Don't Follow Back"
-            emptyMessage="Everyone you follow follows you back! 🎉"
-            showUnfollow={true}
-          />
-        )}
+                        <div class="bg-white rounded-lg shadow mb-6">
+                            <div class="flex border-b">
+                                <button
+                                    onclick="setTab('overview')"
+                                    class="px-6 py-3 font-medium transition ${activeTab === 'overview' ? 'tab-active' : 'tab-inactive'}"
+                                >
+                                    Not Following Back
+                                </button>
+                                <button
+                                    onclick="setTab('notFollowed')"
+                                    class="px-6 py-3 font-medium transition ${activeTab === 'notFollowed' ? 'tab-active' : 'tab-inactive'}"
+                                >
+                                    Don't Follow Back
+                                </button>
+                                <button
+                                    onclick="setTab('mutual')"
+                                    class="px-6 py-3 font-medium transition ${activeTab === 'mutual' ? 'tab-active' : 'tab-inactive'}"
+                                >
+                                    Mutual Followers
+                                </button>
+                            </div>
+                        </div>
 
-        {activeTab === 'notFollowed' && (
-          <UserList 
-            users={notFollowedBack}
-            title="People Who Follow You But You Don't Follow Back"
-            emptyMessage="You follow back everyone who follows you!"
-          />
-        )}
+                        ${activeTab === 'overview' ? renderUserList(
+                            analysis.notFollowingBack,
+                            'People You Follow Who Do Not Follow Back',
+                            'Everyone you follow follows you back! 🎉',
+                            true
+                        ) : ''}
 
-        {activeTab === 'mutual' && (
-          <UserList 
-            users={mutualFollowers}
-            title="Mutual Followers"
-            emptyMessage="No mutual followers yet"
-          />
-        )}
-      </div>
-    </div>
-  );
-}
+                        ${activeTab === 'notFollowed' ? renderUserList(
+                            analysis.notFollowedBack,
+                            'People Who Follow You But You Do Not Follow Back',
+                            'You follow back everyone who follows you!',
+                            false
+                        ) : ''}
+
+                        ${activeTab === 'mutual' ? renderUserList(
+                            analysis.mutualFollowers,
+                            'Mutual Followers',
+                            'No mutual followers yet',
+                            false
+                        ) : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = isLoaded ? renderDashboard() : renderUploadScreen();
+        }
+
+        render();
+    </script>
+</body>
+</html>
