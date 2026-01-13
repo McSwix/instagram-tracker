@@ -34,6 +34,7 @@
                     <a href="index.html" class="nav-active px-4 py-2 rounded-lg font-medium transition">Dashboard</a>
                     <a href="analytics.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Analytics</a>
                     <a href="history.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">History</a>
+                    <a href="upload.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Upload</a>
                 </div>
             </div>
         </div>
@@ -42,6 +43,31 @@
     <div id="app"></div>
 
     <script type="module">
+        // Password Protection
+        const CORRECT_PASSWORD = "chrisfit";
+        
+        function checkPassword() {
+            const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
+            if (storedPassword === CORRECT_PASSWORD) {
+                return true;
+            }
+            
+            const password = prompt("Enter password to access Instagram Tracker:");
+            if (password === CORRECT_PASSWORD) {
+                sessionStorage.setItem('instagram_tracker_auth', password);
+                return true;
+            } else if (password !== null) {
+                alert("Incorrect password!");
+                checkPassword();
+            }
+            return false;
+        }
+        
+        if (!checkPassword()) {
+            document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; min-height: 100vh;"><p style="font-size: 1.5rem; color: #6B7280;">Access Denied</p></div>';
+            throw new Error("Access denied");
+        }
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
@@ -372,7 +398,7 @@
                                 <p class="text-gray-600 mt-1">Last updated: ${lastUpdateDate}</p>
                             </div>
                             <button
-                                onclick="showUploadForm()"
+                                onclick="window.location.href='upload.html'"
                                 class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
