@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Dashboard - Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .nav-active {
+            background-color: #8B5CF6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md mb-8">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-purple-600">📊 Instagram Tracker</span>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="index.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Dashboard</a>
+                    <a href="analytics.html" class="nav-active px-4 py-2 rounded-lg font-medium transition">Analytics</a>
+                    <a href="history.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">History</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="app"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSxtt-88cp4vZlMQz3b1N0BsqNAcTwUyY",
+            authDomain: "instagram-tracker-fda0e.firebaseapp.com",
+            projectId: "instagram-tracker-fda0e",
+            storageBucket: "instagram-tracker-fda0e.firebasestorage.app",
+            messagingSenderId: "1021778226136",
+            appId: "1:1021778226136:web:01920918c68410b9c6a0ad",
+            measurementId: "G-W4RJW473HW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let snapshots = [];
+        let isLoading = true;
+        let followerChart = null;
+        let ratioChart = null;
+
+        async function loadAllSnapshots() {
+            try {
+                isLoading = true;
+                render();
+
+                const q = query(collection(db, "snapshots"), orderBy("timestamp", "asc"));
+                const querySnapshot = await getDocs(q);
+                
+                snapshots = querySnapshot.docs.map(doc => doc.data());
+                
+                isLoading = false;
+                render();
+                
+                if (snapshots.length > 0) {
+                    createCharts();
+                }
+            } catch (error) {
+                console.error('Error loading snapshots:', error);
+                isLoading = false;
+                render();
+            }
+        }
+
+        function createCharts() {
+            const dates = snapshots.map(s => {
+                const date = new Date(s.timestamp);
+                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            });
+            const followerCounts = snapshots.map(s => s.followerCount);
+            const followingCounts = snapshots.map(s => s.followingCount);
+
+            // Follower Growth Chart
+            const followerCtx = document.getElementById('followerChart');
+            if (followerCtx && !followerChart) {
+                followerChart = new Chart(followerCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Followers',
+                                data: followerCounts,
+                                borderColor: '#8B5CF6',
+                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Following',
+                                data: followingCounts,
+                                borderColor: '#EC4899',
+                                backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Follower & Following Growth Over Time',
+                                font: { size: 16 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Follower/Following Ratio Chart
+            const ratios = snapshots.map((s, idx) => {
+                const ratio = s.followerCount / s.followingCount;
+                return ratio.toFixed(2);
+            });
+
+            const ratioCtx = document.getElementById('ratioChart');
+            if (ratioCtx && !ratioChart) {
+                ratioChart = new Chart(ratioCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Follower/Following Ratio',
+                            data: ratios,
+                            backgroundColor: snapshots.map(s => {
+                                const ratio = s.followerCount / s.followingCount;
+                                return ratio >= 1 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+                            }),
+                            borderColor: snapshots.map(s => {
+                                const ratio = s.followerCount / s.followingCount;
+                                return ratio >= 1 ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)';
+                            }),
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            title: {
+                                display: true,
+                                text: 'Follower/Following Ratio (Green = More Followers)',
+                                font: { size: 16 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function calculateStats() {
+            if (snapshots.length === 0) return null;
+
+            const latest = snapshots[snapshots.length - 1];
+            const oldest = snapshots[0];
+            
+            const totalFollowerGrowth = latest.followerCount - oldest.followerCount;
+            const totalFollowingGrowth = latest.followingCount - oldest.followingCount;
+            
+            let avgFollowerChange = 0;
+            let avgFollowingChange = 0;
+            
+            if (snapshots.length > 1) {
+                for (let i = 1; i < snapshots.length; i++) {
+                    avgFollowerChange += (snapshots[i].followerCount - snapshots[i-1].followerCount);
+                    avgFollowingChange += (snapshots[i].followingCount - snapshots[i-1].followingCount);
+                }
+                avgFollowerChange = Math.round(avgFollowerChange / (snapshots.length - 1));
+                avgFollowingChange = Math.round(avgFollowingChange / (snapshots.length - 1));
+            }
+
+            const currentRatio = (latest.followerCount / latest.followingCount).toFixed(2);
+            const healthScore = currentRatio >= 1 ? 'Healthy' : 'Needs Work';
+
+            return {
+                totalFollowerGrowth,
+                totalFollowingGrowth,
+                avgFollowerChange,
+                avgFollowingChange,
+                currentRatio,
+                healthScore,
+                totalUploads: snapshots.length
+            };
+        }
+
+        function renderLoading() {
+            return `
+                <div class="flex items-center justify-center min-h-screen">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+                        <p class="text-xl text-gray-600">Loading analytics...</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNoData() {
+            return `
+                <div class="p-8">
+                    <div class="max-w-4xl mx-auto text-center">
+                        <div class="bg-white rounded-xl shadow-lg p-12">
+                            <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">No Data Yet</h2>
+                            <p class="text-gray-600 mb-6">Upload your Instagram data on the Dashboard to see analytics here!</p>
+                            <a href="index.html" class="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition">
+                                Go to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAnalytics() {
+            const stats = calculateStats();
+            
+            return `
+                <div class="p-8">
+                    <div class="max-w-7xl mx-auto">
+                        <h1 class="text-4xl font-bold text-gray-800 mb-8">Analytics & Insights</h1>
+
+                        <!-- Stats Overview -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <p class="text-gray-500 text-sm font-medium">Total Follower Growth</p>
+                                <p class="text-3xl font-bold mt-2 ${stats.totalFollowerGrowth >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                    ${stats.totalFollowerGrowth >= 0 ? '+' : ''}${stats.totalFollowerGrowth}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">Since first upload</p>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <p class="text-gray-500 text-sm font-medium">Avg Change Per Upload</p>
+                                <p class="text-3xl font-bold mt-2 ${stats.avgFollowerChange >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                    ${stats.avgFollowerChange >= 0 ? '+' : ''}${stats.avgFollowerChange}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">Followers per upload</p>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <p class="text-gray-500 text-sm font-medium">Current Ratio</p>
+                                <p class="text-3xl font-bold mt-2 text-purple-600">${stats.currentRatio}</p>
+                                <p class="text-xs text-gray-500 mt-1">Followers per Following</p>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <p class="text-gray-500 text-sm font-medium">Account Health</p>
+                                <p class="text-3xl font-bold mt-2 ${stats.healthScore === 'Healthy' ? 'text-green-600' : 'text-orange-600'}">
+                                    ${stats.healthScore}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">${stats.totalUploads} data points</p>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <div style="height: 400px;">
+                                    <canvas id="followerChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-1 gap-8">
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <div style="height: 300px;">
+                                    <canvas id="ratioChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Insights -->
+                        <div class="mt-8 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg shadow p-6">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">📈 Quick Insights</h2>
+                            <div class="space-y-3">
+                                ${stats.totalFollowerGrowth > 0 
+                                    ? `<p class="text-gray-700">✅ You've gained <strong>${stats.totalFollowerGrowth}</strong> followers overall - great growth!</p>`
+                                    : `<p class="text-gray-700">⚠️ You've lost <strong>${Math.abs(stats.totalFollowerGrowth)}</strong> followers - consider reviewing your content strategy.</p>`
+                                }
+                                ${stats.currentRatio >= 1
+                                    ? `<p class="text-gray-700">✅ Your follower/following ratio is healthy at <strong>${stats.currentRatio}</strong></p>`
+                                    : `<p class="text-gray-700">💡 You follow more people than follow you. Consider unfollowing accounts that don't follow back.</p>`
+                                }
+                                ${stats.avgFollowerChange > 0
+                                    ? `<p class="text-gray-700">📊 You're averaging <strong>+${stats.avgFollowerChange}</strong> followers between uploads</p>`
+                                    : `<p class="text-gray-700">📊 Your follower count has been declining by an average of <strong>${stats.avgFollowerChange}</strong> between uploads</p>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            if (isLoading) {
+                app.innerHTML = renderLoading();
+            } else if (snapshots.length === 0) {
+                app.innerHTML = renderNoData();
+            } else {
+                app.innerHTML = renderAnalytics();
+            }
+        }
+
+        loadAllSnapshots();
+    </script>
+</body>
+</html>
