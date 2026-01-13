@@ -243,10 +243,14 @@
             const followerUsernames = new Set(followers.map(f => f.username));
             const followingUsernames = new Set(following.map(f => f.username));
 
+            const lostButFollowing = changes && changes.unfollowers ? 
+                following.filter(f => changes.unfollowers.includes(f.username)) : [];
+
             return {
                 notFollowingBack: following.filter(f => !followerUsernames.has(f.username)),
                 notFollowedBack: followers.filter(f => !followingUsernames.has(f.username)),
-                mutualFollowers: following.filter(f => followerUsernames.has(f.username))
+                mutualFollowers: following.filter(f => followerUsernames.has(f.username)),
+                lostButFollowing
             };
         }
 
@@ -443,24 +447,30 @@
                         ` : ''}
 
                         <div class="bg-white rounded-lg shadow mb-6">
-                            <div class="flex border-b">
+                            <div class="flex border-b overflow-x-auto">
                                 <button
                                     onclick="setTab('overview')"
-                                    class="px-6 py-3 font-medium transition ${activeTab === 'overview' ? 'tab-active' : 'tab-inactive'}"
+                                    class="px-6 py-3 font-medium transition whitespace-nowrap ${activeTab === 'overview' ? 'tab-active' : 'tab-inactive'}"
                                 >
                                     Not Following You Back
                                 </button>
                                 <button
                                     onclick="setTab('notFollowed')"
-                                    class="px-6 py-3 font-medium transition ${activeTab === 'notFollowed' ? 'tab-active' : 'tab-inactive'}"
+                                    class="px-6 py-3 font-medium transition whitespace-nowrap ${activeTab === 'notFollowed' ? 'tab-active' : 'tab-inactive'}"
                                 >
                                     Follow You Only
                                 </button>
                                 <button
                                     onclick="setTab('mutual')"
-                                    class="px-6 py-3 font-medium transition ${activeTab === 'mutual' ? 'tab-active' : 'tab-inactive'}"
+                                    class="px-6 py-3 font-medium transition whitespace-nowrap ${activeTab === 'mutual' ? 'tab-active' : 'tab-inactive'}"
                                 >
                                     Mutual Followers
+                                </button>
+                                <button
+                                    onclick="setTab('lostButFollowing')"
+                                    class="px-6 py-3 font-medium transition whitespace-nowrap ${activeTab === 'lostButFollowing' ? 'tab-active' : 'tab-inactive'}"
+                                >
+                                    Lost Followers I Follow
                                 </button>
                             </div>
                         </div>
@@ -484,6 +494,13 @@
                             'Mutual Followers',
                             'No mutual followers yet',
                             false
+                        ) : ''}
+
+                        ${activeTab === 'lostButFollowing' ? renderUserList(
+                            analysis.lostButFollowing,
+                            'People Who Unfollowed You (But You Still Follow)',
+                            changes ? 'Nobody unfollowed you since last upload! 🎉' : 'Upload new data to see who unfollowed you',
+                            true
                         ) : ''}
                     </div>
                 </div>
