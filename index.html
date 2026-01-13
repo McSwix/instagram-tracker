@@ -246,7 +246,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             ${renderStatCard('Followers', followers.length, '#8B5CF6')}
                             ${renderStatCard('Following', following.length, '#EC4899')}
-                            ${renderStatCard('Not Following Back', analysis.notFollowingBack.length, '#EF4444')}
+                            ${renderStatCard('Not Following You Back', analysis.notFollowingBack.length, '#EF4444')}
                             ${renderStatCard('Mutual Followers', analysis.mutualFollowers.length, '#10B981')}
                         </div>
 
@@ -256,13 +256,13 @@
                                     onclick="setTab('overview')"
                                     class="px-6 py-3 font-medium transition ${activeTab === 'overview' ? 'tab-active' : 'tab-inactive'}"
                                 >
-                                    Not Following Back
+                                    Not Following You Back
                                 </button>
                                 <button
                                     onclick="setTab('notFollowed')"
                                     class="px-6 py-3 font-medium transition ${activeTab === 'notFollowed' ? 'tab-active' : 'tab-inactive'}"
                                 >
-                                    Don't Follow Back
+                                    Follow You Only
                                 </button>
                                 <button
                                     onclick="setTab('mutual')"
@@ -282,7 +282,7 @@
 
                         ${activeTab === 'notFollowed' ? renderUserList(
                             analysis.notFollowedBack,
-                            'People Who Follow You But You Do Not Follow Back',
+                            'People Who Follow You Only',
                             'You follow back everyone who follows you!',
                             false
                         ) : ''}
