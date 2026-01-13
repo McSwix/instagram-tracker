@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Follower Manager</title>
+    <title>Instagram Dashboard - Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .nav-active {
+            background-color: #8B5CF6;
+            color: white;
         }
         .tab-active {
             border-bottom: 2px solid #8B5CF6;
@@ -16,12 +20,25 @@
         .tab-inactive {
             color: #6B7280;
         }
-        .tab-inactive:hover {
-            color: #1F2937;
-        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md mb-8">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-purple-600">📊 Instagram Tracker</span>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="index.html" class="nav-active px-4 py-2 rounded-lg font-medium transition">Dashboard</a>
+                    <a href="analytics.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Analytics</a>
+                    <a href="history.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">History</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <div id="app"></div>
 
     <script type="module">
@@ -46,7 +63,50 @@
         let isLoaded = false;
         let activeTab = 'overview';
         let previousSnapshot = null;
+        let currentSnapshot = null;
         let changes = null;
+        let isLoading = true;
+
+        async function loadLatestData() {
+            try {
+                isLoading = true;
+                render();
+
+                const q = query(collection(db, "snapshots"), orderBy("timestamp", "desc"), limit(2));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.docs.length === 0) {
+                    isLoading = false;
+                    render();
+                    return;
+                }
+
+                currentSnapshot = querySnapshot.docs[0].data();
+                
+                followers = currentSnapshot.followers.map(username => ({
+                    username,
+                    href: `https://www.instagram.com/${username}`
+                }));
+                
+                following = currentSnapshot.following.map(username => ({
+                    username,
+                    href: `https://www.instagram.com/${username}`
+                }));
+
+                if (querySnapshot.docs.length >= 2) {
+                    previousSnapshot = querySnapshot.docs[1].data();
+                    calculateChanges();
+                }
+
+                isLoaded = true;
+                isLoading = false;
+                render();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                isLoading = false;
+                render();
+            }
+        }
 
         function parseFollowersFile(jsonData) {
             try {
@@ -96,20 +156,6 @@
             }
         }
 
-        async function loadPreviousSnapshot() {
-            try {
-                const q = query(collection(db, "snapshots"), orderBy("timestamp", "desc"), limit(2));
-                const querySnapshot = await getDocs(q);
-                
-                if (querySnapshot.docs.length >= 2) {
-                    previousSnapshot = querySnapshot.docs[1].data();
-                    calculateChanges();
-                }
-            } catch (error) {
-                console.error('Error loading previous snapshot:', error);
-            }
-        }
-
         function calculateChanges() {
             if (!previousSnapshot) {
                 changes = null;
@@ -118,19 +164,13 @@
 
             const currentFollowers = new Set(followers.map(f => f.username));
             const previousFollowers = new Set(previousSnapshot.followers);
-            const currentFollowing = new Set(following.map(f => f.username));
-            const previousFollowing = new Set(previousSnapshot.following);
 
             const newFollowers = [...currentFollowers].filter(u => !previousFollowers.has(u));
             const unfollowers = [...previousFollowers].filter(u => !currentFollowers.has(u));
-            const newFollowing = [...currentFollowing].filter(u => !previousFollowing.has(u));
-            const unfollowed = [...previousFollowing].filter(u => !currentFollowing.has(u));
 
             changes = {
                 newFollowers,
                 unfollowers,
-                newFollowing,
-                unfollowed,
                 followerChange: followers.length - previousSnapshot.followerCount,
                 followingChange: following.length - previousSnapshot.followingCount
             };
@@ -150,23 +190,14 @@
                 }
 
                 if (followers.length > 0 && following.length > 0) {
-                    await loadPreviousSnapshot();
+                    await loadLatestData();
                     await saveSnapshot();
+                    await loadLatestData();
                     isLoaded = true;
                 }
                 render();
             };
             reader.readAsText(file);
-        }
-
-        function resetApp() {
-            followers = [];
-            following = [];
-            isLoaded = false;
-            activeTab = 'overview';
-            previousSnapshot = null;
-            changes = null;
-            render();
         }
 
         function setTab(tab) {
@@ -185,13 +216,24 @@
             };
         }
 
+        function renderLoading() {
+            return `
+                <div class="flex items-center justify-center min-h-screen">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+                        <p class="text-xl text-gray-600">Loading your data...</p>
+                    </div>
+                </div>
+            `;
+        }
+
         function renderUploadScreen() {
             return `
                 <div class="p-8">
                     <div class="max-w-4xl mx-auto">
                         <div class="text-center mb-8">
-                            <h1 class="text-4xl font-bold text-gray-800 mb-2">Instagram Follower Manager</h1>
-                            <p class="text-gray-600">Upload your Instagram data files to get started</p>
+                            <h1 class="text-4xl font-bold text-gray-800 mb-2">Upload New Data</h1>
+                            <p class="text-gray-600">No data found. Upload your Instagram files to get started</p>
                         </div>
                         
                         <div class="bg-white rounded-xl shadow-lg p-8">
@@ -242,7 +284,7 @@
             `;
         }
 
-        function renderStatCard(title, value, icon, color, change) {
+        function renderStatCard(title, value, color, change) {
             return `
                 <div class="bg-white rounded-lg shadow p-6 border-l-4" style="border-left-color: ${color}">
                     <div class="flex items-center justify-between">
@@ -255,38 +297,6 @@
                                 </p>
                             ` : ''}
                         </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderChangesSummary() {
-            if (!changes || (changes.newFollowers.length === 0 && changes.unfollowers.length === 0)) {
-                return '';
-            }
-
-            return `
-                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg shadow-lg p-6 mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Changes Since Last Upload</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${changes.newFollowers.length > 0 ? `
-                            <div class="bg-white rounded-lg p-4">
-                                <h3 class="font-semibold text-green-600 mb-2">✨ New Followers (${changes.newFollowers.length})</h3>
-                                <div class="max-h-32 overflow-y-auto">
-                                    ${changes.newFollowers.slice(0, 10).map(u => `<p class="text-sm text-gray-700">@${u}</p>`).join('')}
-                                    ${changes.newFollowers.length > 10 ? `<p class="text-xs text-gray-500 mt-2">+${changes.newFollowers.length - 10} more</p>` : ''}
-                                </div>
-                            </div>
-                        ` : ''}
-                        ${changes.unfollowers.length > 0 ? `
-                            <div class="bg-white rounded-lg p-4">
-                                <h3 class="font-semibold text-red-600 mb-2">👋 Unfollowers (${changes.unfollowers.length})</h3>
-                                <div class="max-h-32 overflow-y-auto">
-                                    ${changes.unfollowers.slice(0, 10).map(u => `<p class="text-sm text-gray-700">@${u}</p>`).join('')}
-                                    ${changes.unfollowers.length > 10 ? `<p class="text-xs text-gray-500 mt-2">+${changes.unfollowers.length - 10} more</p>` : ''}
-                                </div>
-                            </div>
-                        ` : ''}
                     </div>
                 </div>
             `;
@@ -337,33 +347,38 @@
 
         function renderDashboard() {
             const analysis = getAnalysis();
+            const lastUpdateDate = currentSnapshot ? new Date(currentSnapshot.timestamp).toLocaleString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : 'Never';
             
             return `
                 <div class="p-8">
                     <div class="max-w-7xl mx-auto">
                         <div class="flex items-center justify-between mb-8">
                             <div>
-                                <h1 class="text-4xl font-bold text-gray-800">Instagram Dashboard</h1>
-                                <p class="text-gray-600 mt-1">Manage your followers and following</p>
+                                <h1 class="text-4xl font-bold text-gray-800">Dashboard</h1>
+                                <p class="text-gray-600 mt-1">Last updated: ${lastUpdateDate}</p>
                             </div>
                             <button
-                                onclick="resetApp()"
-                                class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow hover:shadow-md transition"
+                                onclick="location.reload()"
+                                class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                                 </svg>
-                                Upload New Files
+                                Upload New Data
                             </button>
                         </div>
 
-                        ${renderChangesSummary()}
-
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            ${renderStatCard('Followers', followers.length, 'Users', '#8B5CF6', changes?.followerChange)}
-                            ${renderStatCard('Following', following.length, 'TrendingUp', '#EC4899', changes?.followingChange)}
-                            ${renderStatCard('Not Following You Back', analysis.notFollowingBack.length, 'UserMinus', '#EF4444')}
-                            ${renderStatCard('Mutual Followers', analysis.mutualFollowers.length, 'UserPlus', '#10B981')}
+                            ${renderStatCard('Followers', followers.length, '#8B5CF6', changes?.followerChange)}
+                            ${renderStatCard('Following', following.length, '#EC4899', changes?.followingChange)}
+                            ${renderStatCard('Not Following You Back', analysis.notFollowingBack.length, '#EF4444')}
+                            ${renderStatCard('Mutual Followers', analysis.mutualFollowers.length, '#10B981')}
                         </div>
 
                         ${changes ? `
@@ -372,11 +387,23 @@
                                     <h3 class="text-lg font-semibold text-gray-700 mb-2">👋 Followers Lost</h3>
                                     <p class="text-4xl font-bold text-red-600">${changes.unfollowers.length}</p>
                                     <p class="text-sm text-gray-500 mt-2">People who unfollowed you</p>
+                                    ${changes.unfollowers.length > 0 ? `
+                                        <div class="mt-4 max-h-32 overflow-y-auto bg-red-50 rounded p-3">
+                                            ${changes.unfollowers.slice(0, 5).map(u => `<p class="text-sm text-gray-700">@${u}</p>`).join('')}
+                                            ${changes.unfollowers.length > 5 ? `<p class="text-xs text-gray-500 mt-2">+${changes.unfollowers.length - 5} more</p>` : ''}
+                                        </div>
+                                    ` : ''}
                                 </div>
                                 <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
                                     <h3 class="text-lg font-semibold text-gray-700 mb-2">✨ New Followers</h3>
                                     <p class="text-4xl font-bold text-green-600">${changes.newFollowers.length}</p>
                                     <p class="text-sm text-gray-500 mt-2">People who started following you</p>
+                                    ${changes.newFollowers.length > 0 ? `
+                                        <div class="mt-4 max-h-32 overflow-y-auto bg-green-50 rounded p-3">
+                                            ${changes.newFollowers.slice(0, 5).map(u => `<p class="text-sm text-gray-700">@${u}</p>`).join('')}
+                                            ${changes.newFollowers.length > 5 ? `<p class="text-xs text-gray-500 mt-2">+${changes.newFollowers.length - 5} more</p>` : ''}
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         ` : ''}
@@ -431,14 +458,19 @@
 
         function render() {
             const app = document.getElementById('app');
-            app.innerHTML = isLoaded ? renderDashboard() : renderUploadScreen();
+            if (isLoading) {
+                app.innerHTML = renderLoading();
+            } else if (!isLoaded) {
+                app.innerHTML = renderUploadScreen();
+            } else {
+                app.innerHTML = renderDashboard();
+            }
         }
 
         window.handleFileUpload = handleFileUpload;
-        window.resetApp = resetApp;
         window.setTab = setTab;
 
-        render();
+        loadLatestData();
     </script>
 </body>
 </html>
