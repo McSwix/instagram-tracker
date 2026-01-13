@@ -66,6 +66,13 @@
         let currentSnapshot = null;
         let changes = null;
         let isLoading = true;
+        let showUpload = false;
+
+        function showUploadForm() {
+            showUpload = true;
+            isLoaded = false;
+            render();
+        }
 
         async function loadLatestData() {
             try {
@@ -194,6 +201,7 @@
                     await saveSnapshot();
                     await loadLatestData();
                     isLoaded = true;
+                    showUpload = false;
                 }
                 render();
             };
@@ -364,7 +372,7 @@
                                 <p class="text-gray-600 mt-1">Last updated: ${lastUpdateDate}</p>
                             </div>
                             <button
-                                onclick="location.reload()"
+                                onclick="showUploadForm()"
                                 class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,6 +477,7 @@
 
         window.handleFileUpload = handleFileUpload;
         window.setTab = setTab;
+        window.showUploadForm = showUploadForm;
 
         loadLatestData();
     </script>
