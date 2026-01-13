@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Dashboard - Upload</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .nav-active {
+            background-color: #8B5CF6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md mb-8">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-purple-600">📊 Instagram Tracker</span>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="index.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Dashboard</a>
+                    <a href="analytics.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">Analytics</a>
+                    <a href="history.html" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">History</a>
+                    <a href="upload.html" class="nav-active px-4 py-2 rounded-lg font-medium transition">Upload</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="app"></div>
+
+    <script type="module">
+        // Password Protection
+        const CORRECT_PASSWORD = "chrisfit";
+        
+        function checkPassword() {
+            const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
+            if (storedPassword === CORRECT_PASSWORD) {
+                return true;
+            }
+            
+            const password = prompt("Enter password to access Instagram Tracker:");
+            if (password === CORRECT_PASSWORD) {
+                sessionStorage.setItem('instagram_tracker_auth', password);
+                return true;
+            } else if (password !== null) {
+                alert("Incorrect password!");
+                checkPassword();
+            }
+            return false;
+        }
+        
+        if (!checkPassword()) {
+            document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; min-height: 100vh;"><p style="font-size: 1.5rem; color: #6B7280;">Access Denied</p></div>';
+            throw new Error("Access denied");
+        }
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSxtt-88cp4vZlMQz3b1N0BsqNAcTwUyY",
+            authDomain: "instagram-tracker-fda0e.firebaseapp.com",
+            projectId: "instagram-tracker-fda0e",
+            storageBucket: "instagram-tracker-fda0e.firebasestorage.app",
+            messagingSenderId: "1021778226136",
+            appId: "1:1021778226136:web:01920918c68410b9c6a0ad",
+            measurementId: "G-W4RJW473HW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let followers = [];
+        let following = [];
+        let isUploading = false;
+
+        function parseFollowersFile(jsonData) {
+            try {
+                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+                return data.map(item => ({
+                    username: item.string_list_data[0]?.value,
+                    href: item.string_list_data[0]?.href,
+                    timestamp: item.string_list_data[0]?.timestamp
+                })).filter(item => item.username);
+            } catch (error) {
+                console.error('Error parsing followers file:', error);
+                alert('Error parsing followers file. Please make sure it is the correct format.');
+                return [];
+            }
+        }
+
+        function parseFollowingFile(jsonData) {
+            try {
+                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+                const relationshipsFollowing = data.relationships_following || data;
+                return relationshipsFollowing.map(item => ({
+                    username: item.title,
+                    href: item.string_list_data[0]?.href,
+                    timestamp: item.string_list_data[0]?.timestamp
+                })).filter(item => item.username);
+            } catch (error) {
+                console.error('Error parsing following file:', error);
+                alert('Error parsing following file. Please make sure it is the correct format.');
+                return [];
+            }
+        }
+
+        async function saveSnapshot() {
+            try {
+                const snapshot = {
+                    followers: followers.map(f => f.username),
+                    following: following.map(f => f.username),
+                    timestamp: new Date().toISOString(),
+                    followerCount: followers.length,
+                    followingCount: following.length
+                };
+                
+                await addDoc(collection(db, "snapshots"), snapshot);
+                return true;
+            } catch (error) {
+                console.error('Error saving snapshot:', error);
+                alert('Error saving data to Firebase. Please try again.');
+                return false;
+            }
+        }
+
+        async function handleFileUpload(event, fileType) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const content = e.target.result;
+                if (fileType === 'followers') {
+                    followers = parseFollowersFile(content);
+                } else {
+                    following = parseFollowingFile(content);
+                }
+
+                render();
+
+                if (followers.length > 0 && following.length > 0) {
+                    isUploading = true;
+                    render();
+                    
+                    const success = await saveSnapshot();
+                    
+                    if (success) {
+                        alert('Data uploaded successfully! Redirecting to dashboard...');
+                        window.location.href = 'index.html';
+                    } else {
+                        isUploading = false;
+                        render();
+                    }
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            
+            app.innerHTML = `
+                <div class="p-8">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="text-center mb-8">
+                            <h1 class="text-4xl font-bold text-gray-800 mb-2">Upload New Data</h1>
+                            <p class="text-gray-600">Upload your Instagram JSON files to update your tracking data</p>
+                        </div>
+                        
+                        ${isUploading ? `
+                            <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+                                <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+                                <p class="text-xl text-gray-700">Saving your data...</p>
+                            </div>
+                        ` : `
+                            <div class="bg-white rounded-xl shadow-lg p-8">
+                                <div class="space-y-6">
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-400 transition">
+                                        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                        </svg>
+                                        <label class="block cursor-pointer">
+                                            <span class="text-lg font-semibold text-gray-700">Upload followers_1.json</span>
+                                            <p class="text-sm text-gray-500 mt-1">People who follow you</p>
+                                            <input
+                                                type="file"
+                                                accept=".json"
+                                                onchange="handleFileUpload(event, 'followers')"
+                                                class="mt-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer"
+                                            />
+                                        </label>
+                                        ${followers.length > 0 ? `<p class="text-green-600 mt-2 font-medium">✓ Loaded ${followers.length} followers</p>` : ''}
+                                    </div>
+
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-pink-400 transition">
+                                        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                        </svg>
+                                        <label class="block cursor-pointer">
+                                            <span class="text-lg font-semibold text-gray-700">Upload following.json</span>
+                                            <p class="text-sm text-gray-500 mt-1">People you follow</p>
+                                            <input
+                                                type="file"
+                                                accept=".json"
+                                                onchange="handleFileUpload(event, 'following')"
+                                                class="mt-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 cursor-pointer"
+                                            />
+                                        </label>
+                                        ${following.length > 0 ? `<p class="text-green-600 mt-2 font-medium">✓ Loaded ${following.length} following</p>` : ''}
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                    <p class="text-sm text-blue-800">
+                                        <strong>How to get your files:</strong> Go to Instagram Settings → Security → Download Your Information → Request Download (JSON format)
+                                    </p>
+                                </div>
+
+                                ${followers.length > 0 && following.length > 0 ? `
+                                    <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                                        <p class="text-sm text-green-800 font-medium">
+                                            ✓ Both files loaded! Click "Save & Continue" or files will be saved automatically.
+                                        </p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.handleFileUpload = handleFileUpload;
+
+        render();
+    </script>
+</body>
+</html>
