@@ -366,6 +366,21 @@
                             ${renderStatCard('Mutual Followers', analysis.mutualFollowers.length, 'UserPlus', '#10B981')}
                         </div>
 
+                        ${changes ? `
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-2">👋 Followers Lost</h3>
+                                    <p class="text-4xl font-bold text-red-600">${changes.unfollowers.length}</p>
+                                    <p class="text-sm text-gray-500 mt-2">People who unfollowed you</p>
+                                </div>
+                                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-2">✨ New Followers</h3>
+                                    <p class="text-4xl font-bold text-green-600">${changes.newFollowers.length}</p>
+                                    <p class="text-sm text-gray-500 mt-2">People who started following you</p>
+                                </div>
+                            </div>
+                        ` : ''}
+
                         <div class="bg-white rounded-lg shadow mb-6">
                             <div class="flex border-b">
                                 <button
