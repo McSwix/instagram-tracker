@@ -260,48 +260,52 @@
         let comments = [];
         let isUploading = false;
 
-        function parseFollowersFile(jsonData) {
+        function parseFollowersFile(jsonData, silent = false) {
             try {
                 const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-                return data.map(item => ({
-                    username: item.string_list_data[0]?.value,
-                    href: item.string_list_data[0]?.href,
-                    timestamp: item.string_list_data[0]?.timestamp
+                // Handle both array format and object with nested array
+                const followersArray = Array.isArray(data) ? data : (data.relationships_followers || []);
+                return followersArray.map(item => ({
+                    username: item.string_list_data?.[0]?.value || item.value,
+                    href: item.string_list_data?.[0]?.href || item.href,
+                    timestamp: item.string_list_data?.[0]?.timestamp || item.timestamp
                 })).filter(item => item.username);
             } catch (error) {
                 console.error('Error parsing followers file:', error);
-                alert('Error parsing followers file. Please make sure it is the correct format.');
+                if (!silent) alert('Error parsing followers file. Please make sure it is the correct format.');
                 return [];
             }
         }
 
-        function parseFollowingFile(jsonData) {
+        function parseFollowingFile(jsonData, silent = false) {
             try {
                 const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
                 const relationshipsFollowing = data.relationships_following || data;
-                return relationshipsFollowing.map(item => ({
-                    username: item.title,
-                    href: item.string_list_data[0]?.href,
-                    timestamp: item.string_list_data[0]?.timestamp
+                const followingArray = Array.isArray(relationshipsFollowing) ? relationshipsFollowing : [];
+                return followingArray.map(item => ({
+                    username: item.title || item.string_list_data?.[0]?.value || item.value,
+                    href: item.string_list_data?.[0]?.href || item.href,
+                    timestamp: item.string_list_data?.[0]?.timestamp || item.timestamp
                 })).filter(item => item.username);
             } catch (error) {
                 console.error('Error parsing following file:', error);
-                alert('Error parsing following file. Please make sure it is the correct format.');
+                if (!silent) alert('Error parsing following file. Please make sure it is the correct format.');
                 return [];
             }
         }
 
-        function parseCommentsFile(jsonData) {
+        function parseCommentsFile(jsonData, silent = false) {
             try {
                 const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-                return data.map(item => ({
+                const commentsArray = Array.isArray(data) ? data : (data.comments_media_comments || []);
+                return commentsArray.map(item => ({
                     username: item.string_map_data?.['Media Owner']?.value,
                     comment: item.string_map_data?.['Comment']?.value,
                     timestamp: item.string_map_data?.['Time']?.timestamp
                 })).filter(item => item.username);
             } catch (error) {
                 console.error('Error parsing comments file:', error);
-                alert('Error parsing comments file. Please make sure it is the correct format.');
+                if (!silent) alert('Error parsing comments file. Please make sure it is the correct format.');
                 return [];
             }
         }
@@ -348,51 +352,66 @@
                 zipStatus = 'Searching for files...';
                 render();
 
+                console.log('Files in ZIP:', files);
+
                 // Find and parse followers files (followers_1.json, followers_2.json, etc.)
                 const followerFiles = files.filter(f =>
-                    f.includes('followers_') && f.endsWith('.json') && !f.includes('__MACOSX')
+                    f.includes('followers') && f.endsWith('.json') && !f.includes('__MACOSX') && !zip.files[f].dir
                 );
+                console.log('Found follower files:', followerFiles);
 
                 for (const filePath of followerFiles) {
                     try {
                         const content = await zip.files[filePath].async('string');
-                        const parsed = parseFollowersFile(content);
-                        followers = followers.concat(parsed);
+                        console.log('Parsing followers from:', filePath);
+                        const parsed = parseFollowersFile(content, true);
+                        if (parsed.length > 0) {
+                            console.log('Found', parsed.length, 'followers in', filePath);
+                            followers = followers.concat(parsed);
+                        }
                     } catch (e) {
-                        console.log('Could not parse:', filePath);
+                        console.log('Could not parse:', filePath, e);
                     }
                 }
 
                 // Find and parse following file
                 const followingFiles = files.filter(f =>
-                    f.includes('following') && f.endsWith('.json') && !f.includes('__MACOSX')
+                    f.includes('following') && f.endsWith('.json') && !f.includes('__MACOSX') && !zip.files[f].dir
                 );
+                console.log('Found following files:', followingFiles);
 
                 for (const filePath of followingFiles) {
                     try {
                         const content = await zip.files[filePath].async('string');
-                        const parsed = parseFollowingFile(content);
+                        console.log('Parsing following from:', filePath);
+                        const parsed = parseFollowingFile(content, true);
                         if (parsed.length > 0) {
+                            console.log('Found', parsed.length, 'following in', filePath);
                             following = parsed;
                             break; // Use first valid following file
                         }
                     } catch (e) {
-                        console.log('Could not parse:', filePath);
+                        console.log('Could not parse:', filePath, e);
                     }
                 }
 
                 // Find and parse comment files (post_comments_1.json, etc.)
                 const commentFiles = files.filter(f =>
-                    f.includes('post_comments') && f.endsWith('.json') && !f.includes('__MACOSX')
+                    f.includes('post_comments') && f.endsWith('.json') && !f.includes('__MACOSX') && !zip.files[f].dir
                 );
+                console.log('Found comment files:', commentFiles);
 
                 for (const filePath of commentFiles) {
                     try {
                         const content = await zip.files[filePath].async('string');
-                        const parsed = parseCommentsFile(content);
-                        comments = comments.concat(parsed);
+                        console.log('Parsing comments from:', filePath);
+                        const parsed = parseCommentsFile(content, true);
+                        if (parsed.length > 0) {
+                            console.log('Found', parsed.length, 'comments in', filePath);
+                            comments = comments.concat(parsed);
+                        }
                     } catch (e) {
-                        console.log('Could not parse:', filePath);
+                        console.log('Could not parse:', filePath, e);
                     }
                 }
 
