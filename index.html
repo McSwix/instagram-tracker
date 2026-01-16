@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Tracker - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#0f0a1f',
+                            800: '#1a1333',
+                            700: '#251d47',
+                            600: '#2f2557',
+                        },
+                        accent: {
+                            purple: '#8b5cf6',
+                            pink: '#ec4899',
+                            blue: '#3b82f6',
+                            cyan: '#06b6d4',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f0a1f 0%, #1a1333 50%, #1e1245 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card-light {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #8b5cf6;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+            border-radius: 2px;
+        }
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+        .tab-btn:not(.active):hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+        .user-item {
+            transition: all 0.2s ease;
+        }
+        .user-item:hover {
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateX(4px);
+        }
+        .mobile-menu {
+            display: none;
+        }
+        .mobile-nav {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .desktop-nav {
+                display: none;
+            }
+            .mobile-menu {
+                display: block;
+            }
+            .mobile-nav {
+                display: none;
+            }
+            .mobile-nav.open {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 80%;
+                max-width: 300px;
+                height: 100vh;
+                background: linear-gradient(180deg, #1a1333 0%, #0f0a1f 100%);
+                z-index: 100;
+                padding: 2rem;
+            }
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            .mobile-overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.7);
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav" id="mobileNav">
+        <div class="flex items-center justify-between mb-8">
+            <span class="text-xl font-bold gradient-text">Instagram Tracker</span>
+            <button onclick="closeMobileMenu()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="flex flex-col space-y-4">
+            <a href="index.html" class="text-white font-medium py-2 px-4 rounded-lg bg-purple-600/20">Dashboard</a>
+            <a href="analytics.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Analytics</a>
+            <a href="history.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">History</a>
+            <a href="upload.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Upload</a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="glass-card border-t-0 border-l-0 border-r-0 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-bold text-white hidden sm:block">Instagram Tracker</span>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="desktop-nav flex items-center space-x-1">
+                    <a href="index.html" class="nav-link active px-4 py-2 text-sm font-medium text-white rounded-lg">Dashboard</a>
+                    <a href="analytics.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Analytics</a>
+                    <a href="history.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">History</a>
+                    <a href="upload.html" class="ml-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition">Upload</a>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <button class="mobile-menu p-2 text-gray-400 hover:text-white" onclick="openMobileMenu()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="app"></div>
+
+    <script>
+        function openMobileMenu() {
+            document.getElementById('mobileNav').classList.add('open');
+            document.getElementById('mobileOverlay').classList.add('open');
+        }
+        function closeMobileMenu() {
+            document.getElementById('mobileNav').classList.remove('open');
+            document.getElementById('mobileOverlay').classList.remove('open');
+        }
+    </script>
+
+    <script type="module">
+        // Password Protection
+        const CORRECT_PASSWORD = "chrisfit";
+
+        function checkPassword() {
+            const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
+            if (storedPassword === CORRECT_PASSWORD) {
+                return true;
+            }
+
+            const password = prompt("Enter password to access Instagram Tracker:");
+            if (password === CORRECT_PASSWORD) {
+                sessionStorage.setItem('instagram_tracker_auth', password);
+                return true;
+            } else if (password !== null) {
+                alert("Incorrect password!");
+                checkPassword();
+            }
+            return false;
+        }
+
+        if (!checkPassword()) {
+            document.body.innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-xl text-gray-400">Access Denied</p></div>';
+            throw new Error("Access denied");
+        }
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSxtt-88cp4vZlMQz3b1N0BsqNAcTwUyY",
+            authDomain: "instagram-tracker-fda0e.firebaseapp.com",
+            projectId: "instagram-tracker-fda0e",
+            storageBucket: "instagram-tracker-fda0e.firebasestorage.app",
+            messagingSenderId: "1021778226136",
+            appId: "1:1021778226136:web:01920918c68410b9c6a0ad",
+            measurementId: "G-W4RJW473HW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let followers = [];
+        let following = [];
+        let comments = [];
+        let isLoaded = false;
+        let activeTab = 'overview';
+        let previousSnapshot = null;
+        let currentSnapshot = null;
+        let changes = null;
+        let isLoading = true;
+        let showUpload = false;
+
+        function showUploadForm() {
+            showUpload = true;
+            isLoaded = false;
+            render();
+        }
+
+        async function loadLatestData() {
+            try {
+                isLoading = true;
+                render();
+
+                const q = query(collection(db, "snapshots"), orderBy("timestamp", "desc"), limit(2));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.docs.length === 0) {
+                    isLoading = false;
+                    render();
+                    return;
+                }
+
+                currentSnapshot = querySnapshot.docs[0].data();
+
+                followers = currentSnapshot.followers.map(username => ({
+                    username,
+                    href: `https://www.instagram.com/${username}`
+                }));
+
+                following = currentSnapshot.following.map(username => ({
+                    username,
+                    href: `https://www.instagram.com/${username}`
+                }));
+
+                // Load comments if available
+                if (currentSnapshot.comments) {
+                    comments = currentSnapshot.comments;
+                } else {
+                    comments = [];
+                }
+
+                if (querySnapshot.docs.length >= 2) {
+                    previousSnapshot = querySnapshot.docs[1].data();
+                    calculateChanges();
+                }
+
+                isLoaded = true;
+                isLoading = false;
+                render();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                isLoading = false;
+                render();
+            }
+        }
+
+        function parseFollowersFile(jsonData) {
+            try {
+                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+                return data.map(item => ({
+                    username: item.string_list_data[0]?.value,
+                    href: item.string_list_data[0]?.href,
+                    timestamp: item.string_list_data[0]?.timestamp
+                })).filter(item => item.username);
+            } catch (error) {
+                console.error('Error parsing followers file:', error);
+                alert('Error parsing followers file. Please make sure it is the correct format.');
+                return [];
+            }
+        }
+
+        function parseFollowingFile(jsonData) {
+            try {
+                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+                const relationshipsFollowing = data.relationships_following || data;
+                return relationshipsFollowing.map(item => ({
+                    username: item.title,
+                    href: item.string_list_data[0]?.href,
+                    timestamp: item.string_list_data[0]?.timestamp
+                })).filter(item => item.username);
+            } catch (error) {
+                console.error('Error parsing following file:', error);
+                alert('Error parsing following file. Please make sure it is the correct format.');
+                return [];
+            }
+        }
+
+        async function saveSnapshot() {
+            try {
+                const snapshot = {
+                    followers: followers.map(f => f.username),
+                    following: following.map(f => f.username),
+                    timestamp: new Date().toISOString(),
+                    followerCount: followers.length,
+                    followingCount: following.length
+                };
+
+                await addDoc(collection(db, "snapshots"), snapshot);
+                console.log('Snapshot saved successfully');
+            } catch (error) {
+                console.error('Error saving snapshot:', error);
+            }
+        }
+
+        function calculateChanges() {
+            if (!previousSnapshot) {
+                changes = null;
+                return;
+            }
+
+            const currentFollowers = new Set(followers.map(f => f.username));
+            const previousFollowers = new Set(previousSnapshot.followers);
+
+            const newFollowers = [...currentFollowers].filter(u => !previousFollowers.has(u));
+            const unfollowers = [...previousFollowers].filter(u => !currentFollowers.has(u));
+
+            // Calculate new comments since last upload
+            let newCommentCount = 0;
+            if (comments.length > 0 && previousSnapshot.commentCount !== undefined) {
+                newCommentCount = comments.length - previousSnapshot.commentCount;
+            } else if (comments.length > 0) {
+                newCommentCount = comments.length; // First time with comments
+            }
+
+            changes = {
+                newFollowers,
+                unfollowers,
+                followerChange: followers.length - previousSnapshot.followerCount,
+                followingChange: following.length - previousSnapshot.followingCount,
+                newCommentCount
+            };
+        }
+
+        async function handleFileUpload(event, fileType) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const content = e.target.result;
+                if (fileType === 'followers') {
+                    followers = parseFollowersFile(content);
+                } else {
+                    following = parseFollowingFile(content);
+                }
+
+                if (followers.length > 0 && following.length > 0) {
+                    await loadLatestData();
+                    await saveSnapshot();
+                    await loadLatestData();
+                    isLoaded = true;
+                    showUpload = false;
+                }
+                render();
+            };
+            reader.readAsText(file);
+        }
+
+        function setTab(tab) {
+            activeTab = tab;
+            render();
+        }
+
+        function getAnalysis() {
+            const followerUsernames = new Set(followers.map(f => f.username));
+            const followingUsernames = new Set(following.map(f => f.username));
+
+            const lostButFollowing = changes && changes.unfollowers ?
+                following.filter(f => changes.unfollowers.includes(f.username)) : [];
+
+            return {
+                notFollowingBack: following.filter(f => !followerUsernames.has(f.username)),
+                notFollowedBack: followers.filter(f => !followingUsernames.has(f.username)),
+                mutualFollowers: following.filter(f => followerUsernames.has(f.username)),
+                lostButFollowing
+            };
+        }
+
+        function getCommentAnalysis() {
+            if (comments.length === 0) return null;
+
+            const followerUsernames = new Set(followers.map(f => f.username));
+
+            // Accounts to exclude from analysis
+            const excludedAccounts = new Set(['foreverfitchristine', 'foreverfitchris']);
+
+            // Filter out excluded accounts
+            const filteredComments = comments.filter(c => !excludedAccounts.has(c.username));
+
+            // Calculate 30 days ago in seconds (Unix timestamp)
+            const now = Math.floor(Date.now() / 1000);
+            const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
+
+            // Filter comments to last 30 days
+            const recentComments = filteredComments.filter(c => c.timestamp && c.timestamp >= thirtyDaysAgo);
+
+            // Aggregate ALL comments by username (for total tracking, excluding filtered accounts)
+            const allCommentedAccounts = {};
+            for (const comment of filteredComments) {
+                if (!allCommentedAccounts[comment.username]) {
+                    allCommentedAccounts[comment.username] = {
+                        username: comment.username,
+                        count: 0,
+                        comments: [],
+                        href: `https://www.instagram.com/${comment.username}`
+                    };
+                }
+                allCommentedAccounts[comment.username].count++;
+                allCommentedAccounts[comment.username].comments.push(comment);
+            }
+
+            // Aggregate RECENT comments by username (last 30 days)
+            const recentCommentedAccounts = {};
+            for (const comment of recentComments) {
+                if (!recentCommentedAccounts[comment.username]) {
+                    recentCommentedAccounts[comment.username] = {
+                        username: comment.username,
+                        count: 0,
+                        comments: [],
+                        href: `https://www.instagram.com/${comment.username}`
+                    };
+                }
+                recentCommentedAccounts[comment.username].count++;
+                recentCommentedAccounts[comment.username].comments.push(comment);
+            }
+
+            // Filter recent comments to accounts that don't follow you back
+            const commentingOnNonFollowers = Object.values(recentCommentedAccounts)
+                .filter(account => !followerUsernames.has(account.username))
+                .sort((a, b) => b.count - a.count);
+
+            return {
+                allCommentedAccounts,
+                recentCommentedAccounts,
+                commentingOnNonFollowers,
+                totalComments: filteredComments.length,
+                recentComments: recentComments.length,
+                totalWastedComments: commentingOnNonFollowers.reduce((sum, a) => sum + a.count, 0)
+            };
+        }
+
+        function renderLoading() {
+            return `
+                <div class="flex items-center justify-center min-h-[80vh]">
+                    <div class="text-center">
+                        <div class="relative w-16 h-16 mx-auto mb-6">
+                            <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+                            <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
+                        </div>
+                        <p class="text-lg text-gray-400">Loading your data...</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderUploadScreen() {
+            return `
+                <div class="px-4 py-12 sm:px-6">
+                    <div class="max-w-lg mx-auto text-center">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                            <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-white mb-3">No Data Found</h1>
+                        <p class="text-gray-400 mb-8">Upload your Instagram data to get started with tracking</p>
+                        <a href="upload.html" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            Upload Data
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStatCard(title, value, gradient, change, icon) {
+            const changeHtml = change !== undefined && change !== null ? `
+                <div class="flex items-center gap-1 mt-2">
+                    <span class="text-xs font-medium ${change >= 0 ? 'text-emerald-400' : 'text-red-400'}">
+                        ${change >= 0 ? '+' : ''}${change}
+                    </span>
+                    <span class="text-xs text-gray-500">vs last</span>
+                </div>
+            ` : '';
+
+            return `
+                <div class="stat-card rounded-2xl p-5 sm:p-6">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-10 h-10 rounded-xl ${gradient} flex items-center justify-center">
+                            ${icon}
+                        </div>
+                    </div>
+                    <p class="text-2xl sm:text-3xl font-bold text-white mb-1">${value.toLocaleString()}</p>
+                    <p class="text-sm text-gray-400">${title}</p>
+                    ${changeHtml}
+                </div>
+            `;
+        }
+
+        function renderUserList(users, title, emptyMessage, showViewProfile) {
+            if (!showViewProfile) showViewProfile = false;
+
+            return `
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="p-4 sm:p-6 border-b border-white/5">
+                        <h3 class="text-lg font-semibold text-white">${title}</h3>
+                        <p class="text-sm text-gray-400 mt-1">${users.length} accounts</p>
+                    </div>
+                    <div class="p-4 sm:p-6 max-h-[400px] overflow-y-auto">
+                        ${users.length === 0 ? `
+                            <div class="text-center py-12">
+                                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                    <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-400">${emptyMessage}</p>
+                            </div>
+                        ` : `
+                            <div class="space-y-2">
+                                ${users.map(user => `
+                                    <div class="user-item flex items-center justify-between p-3 rounded-xl">
+                                        <a
+                                            href="${user.href}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-white hover:text-purple-400 font-medium transition"
+                                        >
+                                            @${user.username}
+                                        </a>
+                                        ${showViewProfile ? `
+                                            <a
+                                                href="https://www.instagram.com/${user.username}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                                            >
+                                                View
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCommentsList(accounts, title, emptyMessage) {
+            return `
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="p-4 sm:p-6 border-b border-white/5">
+                        <h3 class="text-lg font-semibold text-white">${title}</h3>
+                        <p class="text-sm text-gray-400 mt-1">${accounts.length} accounts (sorted by most comments)</p>
+                    </div>
+                    <div class="p-4 sm:p-6 max-h-[400px] overflow-y-auto">
+                        ${accounts.length === 0 ? `
+                            <div class="text-center py-12">
+                                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                    <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-400">${emptyMessage}</p>
+                            </div>
+                        ` : `
+                            <div class="space-y-2">
+                                ${accounts.map(account => `
+                                    <div class="user-item flex items-center justify-between p-3 rounded-xl">
+                                        <div class="flex items-center gap-3">
+                                            <a
+                                                href="${account.href}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="text-white hover:text-purple-400 font-medium transition"
+                                            >
+                                                @${account.username}
+                                            </a>
+                                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">
+                                                ${account.count} comment${account.count !== 1 ? 's' : ''}
+                                            </span>
+                                        </div>
+                                        <a
+                                            href="${account.href}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-xs font-medium px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition"
+                                        >
+                                            View
+                                        </a>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDashboard() {
+            const analysis = getAnalysis();
+            const commentAnalysis = getCommentAnalysis();
+            const lastUpdateDate = currentSnapshot ? new Date(currentSnapshot.timestamp).toLocaleString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : 'Never';
+
+            const tabs = [
+                { id: 'overview', label: 'Not Following Back', count: analysis.notFollowingBack.length },
+                { id: 'notFollowed', label: 'Fans Only', count: analysis.notFollowedBack.length },
+                { id: 'mutual', label: 'Mutual', count: analysis.mutualFollowers.length },
+                { id: 'lostButFollowing', label: 'Lost & Following', count: analysis.lostButFollowing.length },
+            ];
+
+            if (commentAnalysis) {
+                tabs.push({ id: 'commentingOnNonFollowers', label: 'Wasted Comments', count: commentAnalysis.commentingOnNonFollowers.length });
+            }
+
+            return `
+                <div class="px-4 py-6 sm:px-6 sm:py-8">
+                    <div class="max-w-7xl mx-auto">
+                        <!-- Header -->
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">Dashboard</h1>
+                                <p class="text-gray-400 text-sm">Last updated: ${lastUpdateDate}</p>
+                            </div>
+                            <a
+                                href="upload.html"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-medium text-sm hover:opacity-90 transition"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                Upload New Data
+                            </a>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                            ${renderStatCard('Followers', followers.length, 'bg-gradient-to-br from-purple-500 to-purple-600', changes?.followerChange, '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>')}
+                            ${renderStatCard('Following', following.length, 'bg-gradient-to-br from-pink-500 to-pink-600', changes?.followingChange, '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>')}
+                            ${renderStatCard('Not Following Back', analysis.notFollowingBack.length, 'bg-gradient-to-br from-red-500 to-red-600', null, '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>')}
+                            ${renderStatCard('Mutual', analysis.mutualFollowers.length, 'bg-gradient-to-br from-emerald-500 to-emerald-600', null, '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>')}
+                        </div>
+
+                        ${commentAnalysis ? `
+                            <!-- Comments Stats -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                <div class="stat-card rounded-2xl p-5 sm:p-6">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <p class="text-2xl sm:text-3xl font-bold text-white mb-1">${commentAnalysis.totalWastedComments}</p>
+                                    <p class="text-sm text-gray-400">Wasted Comments (30 Days)</p>
+                                    <p class="text-xs text-gray-500 mt-1">On ${commentAnalysis.commentingOnNonFollowers.length} non-followers</p>
+                                </div>
+                                <div class="stat-card rounded-2xl p-5 sm:p-6">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <p class="text-2xl sm:text-3xl font-bold text-white mb-1">${commentAnalysis.totalComments}</p>
+                                    <p class="text-sm text-gray-400">Total Comments Tracked</p>
+                                    ${changes && changes.newCommentCount > 0 ? `
+                                        <p class="text-xs text-emerald-400 mt-1">+${changes.newCommentCount} since last upload</p>
+                                    ` : `
+                                        <p class="text-xs text-gray-500 mt-1">Across ${Object.keys(commentAnalysis.allCommentedAccounts).length} accounts</p>
+                                    `}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${changes ? `
+                            <!-- Changes Cards -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                <div class="glass-card rounded-2xl p-5 sm:p-6 border-l-4 border-red-500">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-2xl font-bold text-red-400">${changes.unfollowers.length}</p>
+                                            <p class="text-sm text-gray-400">Lost Followers</p>
+                                        </div>
+                                    </div>
+                                    ${changes.unfollowers.length > 0 ? `
+                                        <div class="mt-3 p-3 rounded-xl bg-red-500/10 max-h-24 overflow-y-auto">
+                                            ${changes.unfollowers.slice(0, 5).map(u => `<p class="text-sm text-gray-300">@${u}</p>`).join('')}
+                                            ${changes.unfollowers.length > 5 ? `<p class="text-xs text-gray-500 mt-2">+${changes.unfollowers.length - 5} more</p>` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="glass-card rounded-2xl p-5 sm:p-6 border-l-4 border-emerald-500">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-2xl font-bold text-emerald-400">${changes.newFollowers.length}</p>
+                                            <p class="text-sm text-gray-400">New Followers</p>
+                                        </div>
+                                    </div>
+                                    ${changes.newFollowers.length > 0 ? `
+                                        <div class="mt-3 p-3 rounded-xl bg-emerald-500/10 max-h-24 overflow-y-auto">
+                                            ${changes.newFollowers.slice(0, 5).map(u => `<p class="text-sm text-gray-300">@${u}</p>`).join('')}
+                                            ${changes.newFollowers.length > 5 ? `<p class="text-xs text-gray-500 mt-2">+${changes.newFollowers.length - 5} more</p>` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Tabs -->
+                        <div class="glass-card rounded-2xl p-2 mb-6 overflow-x-auto">
+                            <div class="flex gap-2 min-w-max">
+                                ${tabs.map(tab => `
+                                    <button
+                                        onclick="setTab('${tab.id}')"
+                                        class="tab-btn px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap ${activeTab === tab.id ? 'active' : 'text-gray-400'}"
+                                    >
+                                        ${tab.label}
+                                        <span class="ml-1.5 text-xs opacity-70">${tab.count}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Tab Content -->
+                        ${activeTab === 'overview' ? renderUserList(
+                            analysis.notFollowingBack,
+                            'People You Follow Who Don\'t Follow Back',
+                            'Everyone you follow follows you back!',
+                            true
+                        ) : ''}
+
+                        ${activeTab === 'notFollowed' ? renderUserList(
+                            analysis.notFollowedBack,
+                            'People Who Only Follow You (Fans)',
+                            'You follow back everyone who follows you!',
+                            false
+                        ) : ''}
+
+                        ${activeTab === 'mutual' ? renderUserList(
+                            analysis.mutualFollowers,
+                            'Mutual Followers',
+                            'No mutual followers yet',
+                            false
+                        ) : ''}
+
+                        ${activeTab === 'lostButFollowing' ? renderUserList(
+                            analysis.lostButFollowing,
+                            'Lost Followers You Still Follow',
+                            changes ? 'No one unfollowed you since last upload!' : 'Upload new data to track unfollowers',
+                            true
+                        ) : ''}
+
+                        ${activeTab === 'commentingOnNonFollowers' && commentAnalysis ? renderCommentsList(
+                            commentAnalysis.commentingOnNonFollowers,
+                            'Wasted Engagement - Last 30 Days',
+                            'No wasted engagement in the last 30 days!'
+                        ) : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            if (isLoading) {
+                app.innerHTML = renderLoading();
+            } else if (!isLoaded) {
+                app.innerHTML = renderUploadScreen();
+            } else {
+                app.innerHTML = renderDashboard();
+            }
+        }
+
+        window.handleFileUpload = handleFileUpload;
+        window.setTab = setTab;
+        window.showUploadForm = showUploadForm;
+
+        loadLatestData();
+    </script>
+</body>
+</html>

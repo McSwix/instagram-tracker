@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Tracker - History</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f0a1f 0%, #1a1333 50%, #1e1245 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #8b5cf6;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+            border-radius: 2px;
+        }
+        .timeline-line {
+            position: absolute;
+            left: 7px;
+            top: 24px;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #8b5cf6, #ec4899);
+        }
+        .mobile-menu {
+            display: none;
+        }
+        .mobile-nav {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .desktop-nav {
+                display: none;
+            }
+            .mobile-menu {
+                display: block;
+            }
+            .mobile-nav.open {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 80%;
+                max-width: 300px;
+                height: 100vh;
+                background: linear-gradient(180deg, #1a1333 0%, #0f0a1f 100%);
+                z-index: 100;
+                padding: 2rem;
+            }
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            .mobile-overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.7);
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav" id="mobileNav">
+        <div class="flex items-center justify-between mb-8">
+            <span class="text-xl font-bold gradient-text">Instagram Tracker</span>
+            <button onclick="closeMobileMenu()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="flex flex-col space-y-4">
+            <a href="index.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Dashboard</a>
+            <a href="analytics.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Analytics</a>
+            <a href="history.html" class="text-white font-medium py-2 px-4 rounded-lg bg-purple-600/20">History</a>
+            <a href="upload.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Upload</a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="glass-card border-t-0 border-l-0 border-r-0 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-bold text-white hidden sm:block">Instagram Tracker</span>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="desktop-nav flex items-center space-x-1">
+                    <a href="index.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Dashboard</a>
+                    <a href="analytics.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Analytics</a>
+                    <a href="history.html" class="nav-link active px-4 py-2 text-sm font-medium text-white rounded-lg">History</a>
+                    <a href="upload.html" class="ml-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition">Upload</a>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <button class="mobile-menu p-2 text-gray-400 hover:text-white" onclick="openMobileMenu()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="app"></div>
+
+    <script>
+        function openMobileMenu() {
+            document.getElementById('mobileNav').classList.add('open');
+            document.getElementById('mobileOverlay').classList.add('open');
+        }
+        function closeMobileMenu() {
+            document.getElementById('mobileNav').classList.remove('open');
+            document.getElementById('mobileOverlay').classList.remove('open');
+        }
+    </script>
+
+    <script type="module">
+        // Password Protection
+        const CORRECT_PASSWORD = "chrisfit";
+
+        function checkPassword() {
+            const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
+            if (storedPassword === CORRECT_PASSWORD) {
+                return true;
+            }
+
+            const password = prompt("Enter password to access Instagram Tracker:");
+            if (password === CORRECT_PASSWORD) {
+                sessionStorage.setItem('instagram_tracker_auth', password);
+                return true;
+            } else if (password !== null) {
+                alert("Incorrect password!");
+                checkPassword();
+            }
+            return false;
+        }
+
+        if (!checkPassword()) {
+            document.body.innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-xl text-gray-400">Access Denied</p></div>';
+            throw new Error("Access denied");
+        }
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSxtt-88cp4vZlMQz3b1N0BsqNAcTwUyY",
+            authDomain: "instagram-tracker-fda0e.firebaseapp.com",
+            projectId: "instagram-tracker-fda0e",
+            storageBucket: "instagram-tracker-fda0e.firebasestorage.app",
+            messagingSenderId: "1021778226136",
+            appId: "1:1021778226136:web:01920918c68410b9c6a0ad",
+            measurementId: "G-W4RJW473HW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let snapshots = [];
+        let isLoading = true;
+
+        async function loadAllSnapshots() {
+            try {
+                isLoading = true;
+                render();
+
+                const q = query(collection(db, "snapshots"), orderBy("timestamp", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                snapshots = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                isLoading = false;
+                render();
+            } catch (error) {
+                console.error('Error loading snapshots:', error);
+                isLoading = false;
+                render();
+            }
+        }
+
+        function calculateChanges(current, previous) {
+            if (!previous) return null;
+
+            const currentFollowers = new Set(current.followers);
+            const previousFollowers = new Set(previous.followers);
+
+            const newFollowers = [...currentFollowers].filter(u => !previousFollowers.has(u));
+            const unfollowers = [...previousFollowers].filter(u => !currentFollowers.has(u));
+
+            return {
+                newFollowers,
+                unfollowers,
+                followerChange: current.followerCount - previous.followerCount,
+                followingChange: current.followingCount - previous.followingCount
+            };
+        }
+
+        function renderLoading() {
+            return `
+                <div class="flex items-center justify-center min-h-[80vh]">
+                    <div class="text-center">
+                        <div class="relative w-16 h-16 mx-auto mb-6">
+                            <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+                            <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
+                        </div>
+                        <p class="text-lg text-gray-400">Loading history...</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNoData() {
+            return `
+                <div class="px-4 py-12 sm:px-6">
+                    <div class="max-w-lg mx-auto text-center">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                            <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-white mb-3">No History Yet</h1>
+                        <p class="text-gray-400 mb-8">Upload your Instagram data to start tracking history</p>
+                        <a href="upload.html" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 transition">
+                            Upload Data
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderHistory() {
+            return `
+                <div class="px-4 py-6 sm:px-6 sm:py-8">
+                    <div class="max-w-4xl mx-auto">
+                        <!-- Header -->
+                        <div class="mb-8">
+                            <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">Upload History</h1>
+                            <p class="text-gray-400 text-sm">Complete timeline of all your uploads</p>
+                        </div>
+
+                        <!-- Summary Stats -->
+                        <div class="grid grid-cols-3 gap-4 mb-8">
+                            <div class="stat-card rounded-2xl p-4 sm:p-5 text-center">
+                                <p class="text-2xl sm:text-3xl font-bold text-purple-400">${snapshots.length}</p>
+                                <p class="text-xs sm:text-sm text-gray-400 mt-1">Total Uploads</p>
+                            </div>
+                            <div class="stat-card rounded-2xl p-4 sm:p-5 text-center">
+                                <p class="text-sm sm:text-base font-bold text-white">${new Date(snapshots[snapshots.length - 1].timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                <p class="text-xs sm:text-sm text-gray-400 mt-1">First Upload</p>
+                            </div>
+                            <div class="stat-card rounded-2xl p-4 sm:p-5 text-center">
+                                <p class="text-sm sm:text-base font-bold text-white">${new Date(snapshots[0].timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                <p class="text-xs sm:text-sm text-gray-400 mt-1">Latest Upload</p>
+                            </div>
+                        </div>
+
+                        <!-- Timeline -->
+                        <div class="space-y-6">
+                            ${snapshots.map((snapshot, index) => {
+                                const date = new Date(snapshot.timestamp);
+                                const formattedDate = date.toLocaleDateString('en-GB', {
+                                    weekday: 'short',
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric'
+                                });
+                                const formattedTime = date.toLocaleTimeString('en-GB', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+
+                                const previous = snapshots[index + 1];
+                                const changes = calculateChanges(snapshot, previous);
+                                const isLatest = index === 0;
+
+                                return `
+                                    <div class="relative pl-8">
+                                        ${index < snapshots.length - 1 ? '<div class="timeline-line"></div>' : ''}
+                                        <div class="absolute left-0 top-5 w-4 h-4 rounded-full ${isLatest ? 'bg-emerald-500' : 'bg-purple-500'} border-4 border-dark-900 z-10"></div>
+
+                                        <div class="glass-card rounded-2xl p-4 sm:p-6">
+                                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                                                <div>
+                                                    <h3 class="text-lg font-bold text-white">
+                                                        ${isLatest ? 'Latest Upload' : `Upload #${snapshots.length - index}`}
+                                                    </h3>
+                                                    <p class="text-sm text-gray-400">${formattedDate} at ${formattedTime}</p>
+                                                </div>
+                                                ${isLatest ? '<span class="inline-flex px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-medium">Current</span>' : ''}
+                                            </div>
+
+                                            <!-- Stats Grid -->
+                                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                                                <div class="bg-purple-500/10 rounded-xl p-3">
+                                                    <p class="text-xs text-gray-400">Followers</p>
+                                                    <p class="text-xl font-bold text-purple-400">${snapshot.followerCount.toLocaleString()}</p>
+                                                    ${changes ? `
+                                                        <p class="text-xs ${changes.followerChange >= 0 ? 'text-emerald-400' : 'text-red-400'}">
+                                                            ${changes.followerChange >= 0 ? '+' : ''}${changes.followerChange}
+                                                        </p>
+                                                    ` : ''}
+                                                </div>
+                                                <div class="bg-pink-500/10 rounded-xl p-3">
+                                                    <p class="text-xs text-gray-400">Following</p>
+                                                    <p class="text-xl font-bold text-pink-400">${snapshot.followingCount.toLocaleString()}</p>
+                                                    ${changes ? `
+                                                        <p class="text-xs ${changes.followingChange >= 0 ? 'text-emerald-400' : 'text-red-400'}">
+                                                            ${changes.followingChange >= 0 ? '+' : ''}${changes.followingChange}
+                                                        </p>
+                                                    ` : ''}
+                                                </div>
+                                                <div class="bg-blue-500/10 rounded-xl p-3">
+                                                    <p class="text-xs text-gray-400">Ratio</p>
+                                                    <p class="text-xl font-bold text-blue-400">
+                                                        ${(snapshot.followerCount / snapshot.followingCount).toFixed(2)}
+                                                    </p>
+                                                </div>
+                                                <div class="bg-white/5 rounded-xl p-3">
+                                                    <p class="text-xs text-gray-400">Net</p>
+                                                    <p class="text-xl font-bold text-gray-300">
+                                                        ${(snapshot.followerCount - snapshot.followingCount).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            ${changes && (changes.newFollowers.length > 0 || changes.unfollowers.length > 0) ? `
+                                                <div class="border-t border-white/5 pt-4">
+                                                    <p class="text-sm font-medium text-gray-300 mb-3">Changes from previous:</p>
+                                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                        ${changes.newFollowers.length > 0 ? `
+                                                            <div class="bg-emerald-500/10 rounded-xl p-3">
+                                                                <p class="text-sm font-medium text-emerald-400 mb-2">New Followers (${changes.newFollowers.length})</p>
+                                                                <div class="space-y-1 max-h-24 overflow-y-auto">
+                                                                    ${changes.newFollowers.slice(0, 5).map(u => `
+                                                                        <p class="text-xs text-gray-300">@${u}</p>
+                                                                    `).join('')}
+                                                                    ${changes.newFollowers.length > 5 ? `
+                                                                        <p class="text-xs text-gray-500">+${changes.newFollowers.length - 5} more</p>
+                                                                    ` : ''}
+                                                                </div>
+                                                            </div>
+                                                        ` : ''}
+
+                                                        ${changes.unfollowers.length > 0 ? `
+                                                            <div class="bg-red-500/10 rounded-xl p-3">
+                                                                <p class="text-sm font-medium text-red-400 mb-2">Unfollowers (${changes.unfollowers.length})</p>
+                                                                <div class="space-y-1 max-h-24 overflow-y-auto">
+                                                                    ${changes.unfollowers.slice(0, 5).map(u => `
+                                                                        <p class="text-xs text-gray-300">@${u}</p>
+                                                                    `).join('')}
+                                                                    ${changes.unfollowers.length > 5 ? `
+                                                                        <p class="text-xs text-gray-500">+${changes.unfollowers.length - 5} more</p>
+                                                                    ` : ''}
+                                                                </div>
+                                                            </div>
+                                                        ` : ''}
+                                                    </div>
+                                                </div>
+                                            ` : !changes ? `
+                                                <div class="border-t border-white/5 pt-4">
+                                                    <p class="text-sm text-gray-500 italic">This was your first upload</p>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            if (isLoading) {
+                app.innerHTML = renderLoading();
+            } else if (snapshots.length === 0) {
+                app.innerHTML = renderNoData();
+            } else {
+                app.innerHTML = renderHistory();
+            }
+        }
+
+        loadAllSnapshots();
+    </script>
+</body>
+</html>

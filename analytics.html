@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Tracker - Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f0a1f 0%, #1a1333 50%, #1e1245 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #8b5cf6;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+            border-radius: 2px;
+        }
+        .mobile-menu {
+            display: none;
+        }
+        .mobile-nav {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .desktop-nav {
+                display: none;
+            }
+            .mobile-menu {
+                display: block;
+            }
+            .mobile-nav.open {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 80%;
+                max-width: 300px;
+                height: 100vh;
+                background: linear-gradient(180deg, #1a1333 0%, #0f0a1f 100%);
+                z-index: 100;
+                padding: 2rem;
+            }
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            .mobile-overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.7);
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav" id="mobileNav">
+        <div class="flex items-center justify-between mb-8">
+            <span class="text-xl font-bold gradient-text">Instagram Tracker</span>
+            <button onclick="closeMobileMenu()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="flex flex-col space-y-4">
+            <a href="index.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Dashboard</a>
+            <a href="analytics.html" class="text-white font-medium py-2 px-4 rounded-lg bg-purple-600/20">Analytics</a>
+            <a href="history.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">History</a>
+            <a href="upload.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Upload</a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="glass-card border-t-0 border-l-0 border-r-0 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-bold text-white hidden sm:block">Instagram Tracker</span>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="desktop-nav flex items-center space-x-1">
+                    <a href="index.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Dashboard</a>
+                    <a href="analytics.html" class="nav-link active px-4 py-2 text-sm font-medium text-white rounded-lg">Analytics</a>
+                    <a href="history.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">History</a>
+                    <a href="upload.html" class="ml-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition">Upload</a>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <button class="mobile-menu p-2 text-gray-400 hover:text-white" onclick="openMobileMenu()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="app"></div>
+
+    <script>
+        function openMobileMenu() {
+            document.getElementById('mobileNav').classList.add('open');
+            document.getElementById('mobileOverlay').classList.add('open');
+        }
+        function closeMobileMenu() {
+            document.getElementById('mobileNav').classList.remove('open');
+            document.getElementById('mobileOverlay').classList.remove('open');
+        }
+    </script>
+
+    <script type="module">
+        // Password Protection
+        const CORRECT_PASSWORD = "chrisfit";
+
+        function checkPassword() {
+            const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
+            if (storedPassword === CORRECT_PASSWORD) {
+                return true;
+            }
+
+            const password = prompt("Enter password to access Instagram Tracker:");
+            if (password === CORRECT_PASSWORD) {
+                sessionStorage.setItem('instagram_tracker_auth', password);
+                return true;
+            } else if (password !== null) {
+                alert("Incorrect password!");
+                checkPassword();
+            }
+            return false;
+        }
+
+        if (!checkPassword()) {
+            document.body.innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-xl text-gray-400">Access Denied</p></div>';
+            throw new Error("Access denied");
+        }
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSxtt-88cp4vZlMQz3b1N0BsqNAcTwUyY",
+            authDomain: "instagram-tracker-fda0e.firebaseapp.com",
+            projectId: "instagram-tracker-fda0e",
+            storageBucket: "instagram-tracker-fda0e.firebasestorage.app",
+            messagingSenderId: "1021778226136",
+            appId: "1:1021778226136:web:01920918c68410b9c6a0ad",
+            measurementId: "G-W4RJW473HW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let snapshots = [];
+        let isLoading = true;
+        let followerChart = null;
+        let ratioChart = null;
+
+        async function loadAllSnapshots() {
+            try {
+                isLoading = true;
+                render();
+
+                const q = query(collection(db, "snapshots"), orderBy("timestamp", "asc"));
+                const querySnapshot = await getDocs(q);
+
+                snapshots = querySnapshot.docs.map(doc => doc.data());
+
+                isLoading = false;
+                render();
+
+                if (snapshots.length > 0) {
+                    setTimeout(createCharts, 100);
+                }
+            } catch (error) {
+                console.error('Error loading snapshots:', error);
+                isLoading = false;
+                render();
+            }
+        }
+
+        function createCharts() {
+            const dates = snapshots.map(s => {
+                const date = new Date(s.timestamp);
+                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            });
+            const followerCounts = snapshots.map(s => s.followerCount);
+            const followingCounts = snapshots.map(s => s.followingCount);
+
+            Chart.defaults.color = '#9ca3af';
+            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+            // Follower Growth Chart
+            const followerCtx = document.getElementById('followerChart');
+            if (followerCtx && !followerChart) {
+                followerChart = new Chart(followerCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Followers',
+                                data: followerCounts,
+                                borderColor: '#8B5CF6',
+                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Following',
+                                data: followingCounts,
+                                borderColor: '#EC4899',
+                                backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: { color: '#9ca3af' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { color: '#9ca3af' }
+                            },
+                            x: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { color: '#9ca3af' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Follower/Following Ratio Chart
+            const ratios = snapshots.map(s => {
+                const ratio = s.followerCount / s.followingCount;
+                return ratio.toFixed(2);
+            });
+
+            const ratioCtx = document.getElementById('ratioChart');
+            if (ratioCtx && !ratioChart) {
+                ratioChart = new Chart(ratioCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Follower/Following Ratio',
+                            data: ratios,
+                            backgroundColor: snapshots.map(s => {
+                                const ratio = s.followerCount / s.followingCount;
+                                return ratio >= 1 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+                            }),
+                            borderColor: snapshots.map(s => {
+                                const ratio = s.followerCount / s.followingCount;
+                                return ratio >= 1 ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)';
+                            }),
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: { color: '#9ca3af' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { color: '#9ca3af' }
+                            },
+                            x: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { color: '#9ca3af' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function calculateStats() {
+            if (snapshots.length === 0) return null;
+
+            const latest = snapshots[snapshots.length - 1];
+            const oldest = snapshots[0];
+
+            const totalFollowerGrowth = latest.followerCount - oldest.followerCount;
+            const totalFollowingGrowth = latest.followingCount - oldest.followingCount;
+
+            let avgFollowerChange = 0;
+            let avgFollowingChange = 0;
+
+            if (snapshots.length > 1) {
+                for (let i = 1; i < snapshots.length; i++) {
+                    avgFollowerChange += (snapshots[i].followerCount - snapshots[i-1].followerCount);
+                    avgFollowingChange += (snapshots[i].followingCount - snapshots[i-1].followingCount);
+                }
+                avgFollowerChange = Math.round(avgFollowerChange / (snapshots.length - 1));
+                avgFollowingChange = Math.round(avgFollowingChange / (snapshots.length - 1));
+            }
+
+            const currentRatio = (latest.followerCount / latest.followingCount).toFixed(2);
+            const healthScore = currentRatio >= 1 ? 'Healthy' : 'Needs Work';
+
+            return {
+                totalFollowerGrowth,
+                totalFollowingGrowth,
+                avgFollowerChange,
+                avgFollowingChange,
+                currentRatio,
+                healthScore,
+                totalUploads: snapshots.length
+            };
+        }
+
+        function renderLoading() {
+            return `
+                <div class="flex items-center justify-center min-h-[80vh]">
+                    <div class="text-center">
+                        <div class="relative w-16 h-16 mx-auto mb-6">
+                            <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+                            <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
+                        </div>
+                        <p class="text-lg text-gray-400">Loading analytics...</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNoData() {
+            return `
+                <div class="px-4 py-12 sm:px-6">
+                    <div class="max-w-lg mx-auto text-center">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                            <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-white mb-3">No Data Yet</h1>
+                        <p class="text-gray-400 mb-8">Upload your Instagram data to see analytics</p>
+                        <a href="upload.html" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 transition">
+                            Upload Data
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAnalytics() {
+            const stats = calculateStats();
+
+            return `
+                <div class="px-4 py-6 sm:px-6 sm:py-8">
+                    <div class="max-w-7xl mx-auto">
+                        <!-- Header -->
+                        <div class="mb-8">
+                            <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">Analytics</h1>
+                            <p class="text-gray-400 text-sm">Track your growth over time</p>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                            <div class="stat-card rounded-2xl p-5">
+                                <p class="text-sm text-gray-400 mb-1">Total Growth</p>
+                                <p class="text-2xl sm:text-3xl font-bold ${stats.totalFollowerGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}">
+                                    ${stats.totalFollowerGrowth >= 0 ? '+' : ''}${stats.totalFollowerGrowth}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">Since first upload</p>
+                            </div>
+
+                            <div class="stat-card rounded-2xl p-5">
+                                <p class="text-sm text-gray-400 mb-1">Avg Per Upload</p>
+                                <p class="text-2xl sm:text-3xl font-bold ${stats.avgFollowerChange >= 0 ? 'text-emerald-400' : 'text-red-400'}">
+                                    ${stats.avgFollowerChange >= 0 ? '+' : ''}${stats.avgFollowerChange}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">Followers per upload</p>
+                            </div>
+
+                            <div class="stat-card rounded-2xl p-5">
+                                <p class="text-sm text-gray-400 mb-1">Current Ratio</p>
+                                <p class="text-2xl sm:text-3xl font-bold text-purple-400">${stats.currentRatio}</p>
+                                <p class="text-xs text-gray-500 mt-1">Followers/Following</p>
+                            </div>
+
+                            <div class="stat-card rounded-2xl p-5">
+                                <p class="text-sm text-gray-400 mb-1">Account Health</p>
+                                <p class="text-2xl sm:text-3xl font-bold ${stats.healthScore === 'Healthy' ? 'text-emerald-400' : 'text-orange-400'}">
+                                    ${stats.healthScore}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">${stats.totalUploads} data points</p>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="space-y-6">
+                            <div class="glass-card rounded-2xl p-4 sm:p-6">
+                                <h3 class="text-lg font-semibold text-white mb-4">Growth Over Time</h3>
+                                <div style="height: 300px;">
+                                    <canvas id="followerChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="glass-card rounded-2xl p-4 sm:p-6">
+                                <h3 class="text-lg font-semibold text-white mb-4">Follower/Following Ratio</h3>
+                                <p class="text-sm text-gray-400 mb-4">Green = More followers than following</p>
+                                <div style="height: 250px;">
+                                    <canvas id="ratioChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Insights -->
+                        <div class="mt-6 glass-card rounded-2xl p-4 sm:p-6">
+                            <h3 class="text-lg font-semibold text-white mb-4">Quick Insights</h3>
+                            <div class="space-y-3">
+                                ${stats.totalFollowerGrowth > 0
+                                    ? `<div class="flex items-start gap-3">
+                                        <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        <p class="text-gray-300">You've gained <span class="text-emerald-400 font-semibold">${stats.totalFollowerGrowth}</span> followers overall - great growth!</p>
+                                    </div>`
+                                    : `<div class="flex items-start gap-3">
+                                        <div class="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        </div>
+                                        <p class="text-gray-300">You've lost <span class="text-orange-400 font-semibold">${Math.abs(stats.totalFollowerGrowth)}</span> followers - consider reviewing your content strategy.</p>
+                                    </div>`
+                                }
+                                ${stats.currentRatio >= 1
+                                    ? `<div class="flex items-start gap-3">
+                                        <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        <p class="text-gray-300">Your follower/following ratio is healthy at <span class="text-purple-400 font-semibold">${stats.currentRatio}</span></p>
+                                    </div>`
+                                    : `<div class="flex items-start gap-3">
+                                        <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        </div>
+                                        <p class="text-gray-300">You follow more people than follow you. Consider unfollowing accounts that don't follow back.</p>
+                                    </div>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            if (isLoading) {
+                app.innerHTML = renderLoading();
+            } else if (snapshots.length === 0) {
+                app.innerHTML = renderNoData();
+            } else {
+                app.innerHTML = renderAnalytics();
+            }
+        }
+
+        loadAllSnapshots();
+    </script>
+</body>
+</html>
