@@ -927,11 +927,13 @@
         function openMobileMenu() {
             document.getElementById('mobileNav').classList.add('open');
             document.getElementById('mobileOverlay').classList.add('open');
+            document.querySelector('.nav-header').style.visibility = 'hidden';
             document.body.style.overflow = 'hidden';
         }
         function closeMobileMenu() {
             document.getElementById('mobileNav').classList.remove('open');
             document.getElementById('mobileOverlay').classList.remove('open');
+            document.querySelector('.nav-header').style.visibility = '';
             document.body.style.overflow = '';
         }
 
