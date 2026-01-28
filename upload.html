@@ -3,244 +3,518 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Tracker - Upload</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Upload | Instagram Tracker</title>
+    <link rel="stylesheet" href="styles/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'inter': ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        dark: {
-                            900: '#0f0a1f',
-                            800: '#1a1333',
-                            700: '#251d47',
-                            600: '#2f2557',
-                        },
-                        accent: {
-                            purple: '#8b5cf6',
-                            pink: '#ec4899',
-                            blue: '#3b82f6',
-                            cyan: '#06b6d4',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-        body {
-            background: linear-gradient(135deg, #0f0a1f 0%, #1a1333 50%, #1e1245 100%);
-            min-height: 100vh;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .nav-link {
+        /* Upload Zone Styles */
+        .upload-zone {
+            background: var(--bg-surface);
+            border: 2px dashed var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            cursor: pointer;
+            transition: all var(--duration-base) var(--ease-out-expo);
             position: relative;
-            transition: all 0.3s ease;
+            overflow: hidden;
         }
-        .nav-link:hover {
-            color: #8b5cf6;
-        }
-        .nav-link.active::after {
+
+        .upload-zone::before {
             content: '';
             position: absolute;
-            bottom: -4px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #8b5cf6, #ec4899);
-            border-radius: 2px;
+            inset: 0;
+            background: var(--ig-gradient-soft);
+            opacity: 0;
+            transition: opacity var(--duration-base);
         }
-        .upload-zone {
-            background: rgba(255, 255, 255, 0.02);
-            border: 2px dashed rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
+
         .upload-zone:hover {
-            border-color: rgba(139, 92, 246, 0.5);
-            background: rgba(139, 92, 246, 0.05);
+            border-color: var(--ig-pink);
+            transform: translateY(-2px);
         }
+
+        .upload-zone:hover::before {
+            opacity: 1;
+        }
+
         .upload-zone.dragover {
-            border-color: rgba(139, 92, 246, 0.8);
-            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--ig-pink);
+            border-style: solid;
+            transform: scale(1.02);
         }
+
+        .upload-zone.dragover::before {
+            opacity: 1;
+        }
+
+        .upload-zone.uploaded {
+            border-color: var(--color-positive);
+            border-style: solid;
+        }
+
+        .upload-zone input[type="file"] {
+            display: none;
+        }
+
+        /* Upload Icon Animation */
+        .upload-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .upload-icon.primary {
+            background: var(--ig-gradient);
+        }
+
+        .upload-icon.purple {
+            background: linear-gradient(135deg, var(--ig-purple) 0%, var(--ig-blue) 100%);
+        }
+
+        .upload-icon.pink {
+            background: linear-gradient(135deg, var(--ig-pink) 0%, var(--ig-magenta) 100%);
+        }
+
+        .upload-icon.orange {
+            background: linear-gradient(135deg, var(--ig-orange) 0%, var(--ig-coral) 100%);
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: var(--color-positive-soft);
+            color: var(--color-positive);
+        }
+
+        .status-badge.required {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+        }
+
+        .status-badge.optional {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+        }
+
+        .status-badge.processing {
+            background: var(--ig-gradient-soft);
+            color: var(--ig-pink);
+        }
+
+        .status-badge.easiest {
+            background: var(--ig-gradient-soft);
+            color: var(--ig-pink);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-elevated);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+
+        .progress-bar__fill {
+            height: 100%;
+            background: var(--ig-gradient);
+            border-radius: var(--radius-full);
+            transition: width var(--duration-slow) var(--ease-out-expo);
+        }
+
+        /* Success Animation */
+        @keyframes successPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .success-icon {
+            animation: successPop var(--duration-slow) var(--ease-out-back);
+        }
+
+        /* Mobile Nav Styles */
         .mobile-menu {
             display: none;
         }
+
         .mobile-nav {
             display: none;
         }
+
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--duration-base) var(--ease-out-expo);
+        }
+
+        .mobile-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-nav.open {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-deep);
+            z-index: 100;
+            padding: var(--space-6);
+            transform: translateX(0);
+            animation: slideInLeft var(--duration-slow) var(--ease-out-expo);
+        }
+
         @media (max-width: 768px) {
             .desktop-nav {
                 display: none;
             }
             .mobile-menu {
-                display: block;
+                display: flex;
             }
-            .mobile-nav {
-                display: none;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 480px) {
+            .upload-zone {
+                padding: var(--space-4);
             }
-            .mobile-nav.open {
-                display: block;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 80%;
-                max-width: 300px;
-                height: 100vh;
-                background: linear-gradient(180deg, #1a1333 0%, #0f0a1f 100%);
-                z-index: 100;
-                padding: 2rem;
+
+            .upload-icon {
+                width: 44px;
+                height: 44px;
             }
-            .mobile-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
+
+            .upload-icon svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            .status-badge {
+                font-size: var(--text-xs);
+                padding: var(--space-1) var(--space-2);
+            }
+
+            .divider {
+                margin: var(--space-4) 0;
+            }
+
+            .modal-content {
+                padding: var(--space-4);
+            }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--duration-base) var(--ease-out-expo);
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.95) translateY(10px);
+            transition: transform var(--duration-base) var(--ease-out-expo);
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: var(--text-base);
+            outline: none;
+            transition: border-color var(--duration-fast);
+        }
+
+        .modal-input:focus {
+            border-color: var(--ig-pink);
+        }
+
+        .modal-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Toast Styles */
+        .toast-container {
+            position: fixed;
+            top: var(--space-4);
+            right: var(--space-4);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .toast {
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-4);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            min-width: 280px;
+            max-width: 400px;
+            animation: slideInRight var(--duration-slow) var(--ease-out-expo);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.success { border-left: 3px solid var(--color-positive); }
+        .toast.error { border-left: 3px solid var(--color-negative); }
+        .toast.info { border-left: 3px solid var(--color-info); }
+
+        .toast-exit {
+            animation: slideOutRight var(--duration-base) var(--ease-out-expo) forwards;
+        }
+
+        @keyframes slideOutRight {
+            to {
                 opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.3s ease;
-            }
-            .mobile-overlay.open {
-                opacity: 1;
-                pointer-events: auto;
+                transform: translateX(100%);
             }
         }
-        input[type="file"] {
-            display: none;
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            margin: var(--space-6) 0;
         }
-        ::-webkit-scrollbar {
-            width: 8px;
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--glass-border);
         }
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.5);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.7);
+
+        .divider span {
+            font-size: var(--text-sm);
+            color: var(--text-muted);
         }
     </style>
 </head>
-<body class="text-white">
+<body>
     <!-- Mobile Overlay -->
     <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Navigation -->
     <nav class="mobile-nav" id="mobileNav">
         <div class="flex items-center justify-between mb-8">
-            <span class="text-xl font-bold gradient-text">Instagram Tracker</span>
-            <button onclick="closeMobileMenu()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <span class="text-display text-gradient" style="font-size: var(--text-xl);">Instagram Tracker</span>
+            <button onclick="closeMobileMenu()" class="btn-ghost btn-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
-        <div class="flex flex-col space-y-4">
-            <a href="index.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Dashboard</a>
-            <a href="analytics.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Analytics</a>
-            <a href="history.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">History</a>
-            <a href="upload.html" class="text-white font-medium py-2 px-4 rounded-lg bg-purple-600/20">Upload</a>
+        <div class="flex flex-col gap-2">
+            <a href="index.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">Dashboard</a>
+            <a href="analytics.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">Analytics</a>
+            <a href="history.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">History</a>
+            <a href="upload.html" class="nav-link active" style="display: block; padding: var(--space-3) var(--space-4); background: var(--bg-elevated); border-radius: var(--radius-lg);">Upload</a>
         </div>
     </nav>
 
     <!-- Header -->
-    <header class="glass-card border-t-0 border-l-0 border-r-0 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+    <header class="nav-header">
+        <div class="max-w-7xl mx-auto px-4" style="padding-left: var(--space-4); padding-right: var(--space-4);">
+            <div class="flex items-center justify-between" style="height: 64px;">
+                <div class="flex items-center gap-3">
+                    <div style="width: 36px; height: 36px; border-radius: var(--radius-lg); background: var(--ig-gradient); display: flex; align-items: center; justify-content: center;">
+                        <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
-                    <span class="text-lg font-bold text-white hidden sm:block">Instagram Tracker</span>
+                    <span class="text-display text-primary md:block hidden" style="font-size: var(--text-lg);">Instagram Tracker</span>
                 </div>
 
                 <!-- Desktop Navigation -->
-                <nav class="desktop-nav flex items-center space-x-1">
-                    <a href="index.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Dashboard</a>
-                    <a href="analytics.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Analytics</a>
-                    <a href="history.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">History</a>
-                    <a href="upload.html" class="nav-link active ml-2 px-4 py-2 text-sm font-medium text-white rounded-lg">Upload</a>
+                <nav class="desktop-nav flex items-center gap-1">
+                    <a href="index.html" class="nav-link">Dashboard</a>
+                    <a href="analytics.html" class="nav-link">Analytics</a>
+                    <a href="history.html" class="nav-link">History</a>
+                    <a href="upload.html" class="nav-link active" style="margin-left: var(--space-2);">Upload</a>
                 </nav>
 
                 <!-- Mobile Menu Button -->
-                <button class="mobile-menu p-2 text-gray-400 hover:text-white" onclick="openMobileMenu()">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                <button class="mobile-menu btn-ghost btn-icon" onclick="openMobileMenu()">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
             </div>
         </div>
     </header>
 
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Password Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-content">
+            <h3 class="text-display mb-4" style="font-size: var(--text-xl);">Enter Password</h3>
+            <p class="text-secondary mb-4" style="font-size: var(--text-sm);">This page is password protected.</p>
+            <input type="password" id="passwordInput" class="modal-input mb-4" placeholder="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+            <div class="flex gap-3">
+                <button onclick="submitPassword()" class="btn btn-primary flex-1">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
     <div id="app"></div>
 
     <script>
+        // ============================================
+        // INLINED COMPONENTS
+        // ============================================
+
+        // Toast Manager
+        const ToastManager = {
+            container: null,
+            init() {
+                this.container = document.getElementById('toastContainer');
+            },
+            show(message, type = 'info', duration = 4000) {
+                if (!this.container) this.init();
+
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+
+                const icons = {
+                    success: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+                    error: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+                    info: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                };
+
+                const iconColors = {
+                    success: 'var(--color-positive)',
+                    error: 'var(--color-negative)',
+                    info: 'var(--color-info)'
+                };
+
+                toast.innerHTML = `
+                    <span style="color: ${iconColors[type]}">${icons[type]}</span>
+                    <span style="color: var(--text-primary); font-size: var(--text-sm);">${message}</span>
+                `;
+
+                this.container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.classList.add('toast-exit');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            },
+            success(msg) { this.show(msg, 'success'); },
+            error(msg) { this.show(msg, 'error'); },
+            info(msg) { this.show(msg, 'info'); }
+        };
+
+        // ============================================
+        // MOBILE MENU
+        // ============================================
         function openMobileMenu() {
             document.getElementById('mobileNav').classList.add('open');
             document.getElementById('mobileOverlay').classList.add('open');
         }
+
         function closeMobileMenu() {
             document.getElementById('mobileNav').classList.remove('open');
             document.getElementById('mobileOverlay').classList.remove('open');
         }
-    </script>
 
-    <script type="module">
-        // Password Protection
+        // ============================================
+        // PASSWORD PROTECTION
+        // ============================================
         const CORRECT_PASSWORD = "chrisfit";
+        let passwordResolve = null;
 
         function checkPassword() {
             const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
             if (storedPassword === CORRECT_PASSWORD) {
-                return true;
+                return Promise.resolve(true);
             }
 
-            const password = prompt("Enter password to access Instagram Tracker:");
+            return new Promise((resolve) => {
+                passwordResolve = resolve;
+                document.getElementById('passwordModal').classList.add('open');
+                document.getElementById('passwordInput').focus();
+            });
+        }
+
+        function submitPassword() {
+            const password = document.getElementById('passwordInput').value;
             if (password === CORRECT_PASSWORD) {
                 sessionStorage.setItem('instagram_tracker_auth', password);
-                return true;
-            } else if (password !== null) {
-                alert("Incorrect password!");
-                checkPassword();
+                document.getElementById('passwordModal').classList.remove('open');
+                if (passwordResolve) passwordResolve(true);
+            } else {
+                ToastManager.error('Incorrect password');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
             }
-            return false;
         }
 
-        if (!checkPassword()) {
-            document.body.innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-xl text-gray-400">Access Denied</p></div>';
-            throw new Error("Access denied");
-        }
+        document.getElementById('passwordInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitPassword();
+        });
+    </script>
 
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDSxtt-88cp4vZlMQz3b1N0BsqNAcTwUyY",
@@ -259,11 +533,80 @@
         let following = [];
         let comments = [];
         let isUploading = false;
+        let zipStatus = '';
+        let isProcessingZip = false;
+        let uploadProgress = 0;
+        let isDeleting = false;
+        let lastUploadInfo = null;
+        let commentFilesFound = 0;
+        let followerFilesFound = 0;
+
+        async function init() {
+            const authenticated = await checkPassword();
+            if (!authenticated) {
+                document.getElementById('app').innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-secondary">Access Denied</p></div>';
+                return;
+            }
+            await loadLastUploadInfo();
+            render();
+            setupDragDrop();
+        }
+
+        async function loadLastUploadInfo() {
+            try {
+                const q = query(collection(db, "snapshots"), orderBy("timestamp", "desc"), limit(1));
+                const querySnapshot = await getDocs(q);
+                if (querySnapshot.docs.length > 0) {
+                    const doc = querySnapshot.docs[0];
+                    const data = doc.data();
+                    lastUploadInfo = {
+                        id: doc.id,
+                        timestamp: data.timestamp,
+                        followerCount: data.followerCount,
+                        followingCount: data.followingCount
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading last upload info:', error);
+            }
+        }
+
+        async function deleteLastUpload() {
+            if (!lastUploadInfo) {
+                ToastManager.error('No uploads to delete');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete the upload from ${new Date(lastUploadInfo.timestamp).toLocaleString()}?\n\nThis cannot be undone.`)) {
+                return;
+            }
+
+            isDeleting = true;
+            render();
+
+            try {
+                await deleteDoc(doc(db, "snapshots", lastUploadInfo.id));
+                ToastManager.success('Upload deleted successfully');
+                lastUploadInfo = null;
+                await loadLastUploadInfo();
+                isDeleting = false;
+                render();
+            } catch (error) {
+                console.error('Error deleting upload:', error);
+                ToastManager.error('Failed to delete upload');
+                isDeleting = false;
+                render();
+            }
+        }
+
+        function setupDragDrop() {
+            document.addEventListener('dragover', (e) => e.preventDefault());
+            document.addEventListener('drop', (e) => e.preventDefault());
+        }
 
         function parseFollowersFile(jsonData, silent = false) {
             try {
                 const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-                // Handle both array format and object with nested array
                 const followersArray = Array.isArray(data) ? data : (data.relationships_followers || []);
                 return followersArray.map(item => ({
                     username: item.string_list_data?.[0]?.value || item.value,
@@ -272,7 +615,7 @@
                 })).filter(item => item.username);
             } catch (error) {
                 console.error('Error parsing followers file:', error);
-                if (!silent) alert('Error parsing followers file. Please make sure it is the correct format.');
+                if (!silent) ToastManager.error('Error parsing followers file');
                 return [];
             }
         }
@@ -289,7 +632,7 @@
                 })).filter(item => item.username);
             } catch (error) {
                 console.error('Error parsing following file:', error);
-                if (!silent) alert('Error parsing following file. Please make sure it is the correct format.');
+                if (!silent) ToastManager.error('Error parsing following file');
                 return [];
             }
         }
@@ -305,7 +648,7 @@
                 })).filter(item => item.username);
             } catch (error) {
                 console.error('Error parsing comments file:', error);
-                if (!silent) alert('Error parsing comments file. Please make sure it is the correct format.');
+                if (!silent) ToastManager.error('Error parsing comments file');
                 return [];
             }
         }
@@ -326,48 +669,52 @@
                 comments = comments.concat(parsed);
             }
 
+            if (comments.length > 0) {
+                ToastManager.success(`Loaded ${comments.length} comments`);
+            }
             render();
         }
 
-        let zipStatus = '';
-        let isProcessingZip = false;
-
         async function handleZipUpload(event) {
-            const file = event.target.files[0];
+            const file = event.target.files?.[0] || event.dataTransfer?.files?.[0];
             if (!file) return;
 
             isProcessingZip = true;
             zipStatus = 'Reading ZIP file...';
+            uploadProgress = 10;
             render();
 
             try {
                 const zip = await JSZip.loadAsync(file);
                 const files = Object.keys(zip.files);
 
-                // Reset data
                 followers = [];
                 following = [];
                 comments = [];
 
                 zipStatus = 'Searching for files...';
+                uploadProgress = 30;
                 render();
 
                 console.log('Files in ZIP:', files);
 
-                // Find and parse followers files (followers_1.json, followers_2.json, etc.)
+                // Find and parse followers files
                 const followerFiles = files.filter(f =>
                     f.includes('followers') && f.endsWith('.json') && !f.includes('__MACOSX') && !zip.files[f].dir
                 );
-                console.log('Found follower files:', followerFiles);
+
+                followerFilesFound = 0;
+                uploadProgress = 50;
+                render();
 
                 for (const filePath of followerFiles) {
                     try {
                         const content = await zip.files[filePath].async('string');
-                        console.log('Parsing followers from:', filePath);
                         const parsed = parseFollowersFile(content, true);
                         if (parsed.length > 0) {
                             console.log('Found', parsed.length, 'followers in', filePath);
                             followers = followers.concat(parsed);
+                            followerFilesFound++;
                         }
                     } catch (e) {
                         console.log('Could not parse:', filePath, e);
@@ -378,37 +725,41 @@
                 const followingFiles = files.filter(f =>
                     f.includes('following') && f.endsWith('.json') && !f.includes('__MACOSX') && !zip.files[f].dir
                 );
-                console.log('Found following files:', followingFiles);
+
+                uploadProgress = 70;
+                render();
 
                 for (const filePath of followingFiles) {
                     try {
                         const content = await zip.files[filePath].async('string');
-                        console.log('Parsing following from:', filePath);
                         const parsed = parseFollowingFile(content, true);
                         if (parsed.length > 0) {
                             console.log('Found', parsed.length, 'following in', filePath);
                             following = parsed;
-                            break; // Use first valid following file
+                            break;
                         }
                     } catch (e) {
                         console.log('Could not parse:', filePath, e);
                     }
                 }
 
-                // Find and parse comment files (post_comments_1.json, etc.)
+                // Find and parse comment files
                 const commentFiles = files.filter(f =>
                     f.includes('post_comments') && f.endsWith('.json') && !f.includes('__MACOSX') && !zip.files[f].dir
                 );
-                console.log('Found comment files:', commentFiles);
+
+                commentFilesFound = 0;
+                uploadProgress = 90;
+                render();
 
                 for (const filePath of commentFiles) {
                     try {
                         const content = await zip.files[filePath].async('string');
-                        console.log('Parsing comments from:', filePath);
                         const parsed = parseCommentsFile(content, true);
                         if (parsed.length > 0) {
                             console.log('Found', parsed.length, 'comments in', filePath);
                             comments = comments.concat(parsed);
+                            commentFilesFound++;
                         }
                     } catch (e) {
                         console.log('Could not parse:', filePath, e);
@@ -416,11 +767,14 @@
                 }
 
                 isProcessingZip = false;
+                uploadProgress = 100;
 
                 if (followers.length === 0 && following.length === 0) {
                     zipStatus = 'Could not find Instagram data files in ZIP';
+                    ToastManager.error('No Instagram data found in ZIP');
                 } else {
                     zipStatus = `Found: ${followers.length} followers, ${following.length} following${comments.length > 0 ? `, ${comments.length} comments` : ''}`;
+                    ToastManager.success('ZIP processed successfully!');
                 }
 
                 render();
@@ -428,7 +782,8 @@
             } catch (error) {
                 console.error('Error processing ZIP:', error);
                 isProcessingZip = false;
-                zipStatus = 'Error reading ZIP file. Make sure it\'s a valid ZIP.';
+                zipStatus = 'Error reading ZIP file';
+                ToastManager.error('Error reading ZIP file');
                 render();
             }
         }
@@ -443,7 +798,6 @@
                     followingCount: following.length
                 };
 
-                // Add comments data if provided
                 if (comments.length > 0) {
                     const commentedAccounts = [...new Set(comments.map(c => c.username))];
                     snapshot.commentedAccounts = commentedAccounts;
@@ -455,7 +809,7 @@
                 return true;
             } catch (error) {
                 console.error('Error saving snapshot:', error);
-                alert('Error saving data to Firebase. Please try again.');
+                ToastManager.error('Error saving data to Firebase');
                 return false;
             }
         }
@@ -469,8 +823,14 @@
                 const content = e.target.result;
                 if (fileType === 'followers') {
                     followers = parseFollowersFile(content);
+                    if (followers.length > 0) {
+                        ToastManager.success(`Loaded ${followers.length} followers`);
+                    }
                 } else {
                     following = parseFollowingFile(content);
+                    if (following.length > 0) {
+                        ToastManager.success(`Loaded ${following.length} following`);
+                    }
                 }
 
                 render();
@@ -480,7 +840,7 @@
 
         async function handleSaveAndContinue() {
             if (followers.length === 0 || following.length === 0) {
-                alert('Please upload both followers and following files first.');
+                ToastManager.error('Please upload both followers and following files first');
                 return;
             }
 
@@ -490,11 +850,31 @@
             const success = await saveSnapshot();
 
             if (success) {
-                alert('Data uploaded successfully! Redirecting to dashboard...');
-                window.location.href = 'index.html';
+                ToastManager.success('Data uploaded successfully!');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
             } else {
                 isUploading = false;
                 render();
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e, type) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+
+            if (type === 'zip') {
+                handleZipUpload(e);
             }
         }
 
@@ -502,208 +882,222 @@
             const app = document.getElementById('app');
 
             app.innerHTML = `
-                <div class="px-4 py-8 sm:px-6 sm:py-12">
-                    <div class="max-w-2xl mx-auto">
-                        <!-- Header -->
-                        <div class="text-center mb-10">
-                            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                            </div>
-                            <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Upload Data</h1>
-                            <p class="text-gray-400">Upload your Instagram export files to update your tracking</p>
+                <div style="padding: var(--space-8) var(--space-4); max-width: 640px; margin: 0 auto;">
+                    <!-- Header -->
+                    <div class="text-center mb-8 animate-fade-up">
+                        <div style="width: 72px; height: 72px; margin: 0 auto var(--space-4); border-radius: var(--radius-2xl); background: var(--ig-gradient-soft); display: flex; align-items: center; justify-content: center;">
+                            <svg width="32" height="32" fill="none" stroke="var(--ig-pink)" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
                         </div>
-
-                        ${isUploading ? `
-                            <div class="glass-card rounded-2xl p-12 text-center">
-                                <div class="relative w-16 h-16 mx-auto mb-6">
-                                    <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
-                                    <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
-                                </div>
-                                <p class="text-lg text-gray-300">Saving your data...</p>
-                                <p class="text-sm text-gray-500 mt-2">This may take a moment</p>
-                            </div>
-                        ` : `
-                            <div class="space-y-4">
-                                <!-- ZIP Upload (Recommended) -->
-                                <label class="upload-zone block rounded-2xl p-6 sm:p-8 cursor-pointer border-purple-500/30 bg-purple-500/5">
-                                    <input
-                                        type="file"
-                                        accept=".zip"
-                                        onchange="handleZipUpload(event)"
-                                    />
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-white font-semibold">Upload Instagram ZIP File</p>
-                                            <p class="text-sm text-gray-400">Recommended - Auto-extracts all files</p>
-                                        </div>
-                                        ${isProcessingZip ? `
-                                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/20">
-                                                <div class="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-                                            </div>
-                                        ` : (followers.length > 0 || following.length > 0) ? `
-                                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20">
-                                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                </svg>
-                                            </div>
-                                        ` : `
-                                            <div class="px-3 py-1.5 rounded-lg bg-purple-500/20">
-                                                <span class="text-sm text-purple-400">Easiest</span>
-                                            </div>
-                                        `}
-                                    </div>
-                                    ${zipStatus ? `
-                                        <p class="mt-3 text-sm ${zipStatus.includes('Error') || zipStatus.includes('Could not') ? 'text-red-400' : 'text-emerald-400'}">
-                                            ${zipStatus}
-                                        </p>
-                                    ` : ''}
-                                </label>
-
-                                <div class="flex items-center gap-4 my-6">
-                                    <div class="flex-1 h-px bg-white/10"></div>
-                                    <span class="text-sm text-gray-500">or upload individual files</span>
-                                    <div class="flex-1 h-px bg-white/10"></div>
-                                </div>
-
-                                <!-- Followers Upload -->
-                                <label class="upload-zone block rounded-2xl p-6 sm:p-8 cursor-pointer">
-                                    <input
-                                        type="file"
-                                        accept=".json"
-                                        onchange="handleFileUpload(event, 'followers')"
-                                    />
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-white font-semibold">Followers</p>
-                                            <p class="text-sm text-gray-400">followers_1.json</p>
-                                        </div>
-                                        ${followers.length > 0 ? `
-                                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20">
-                                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                </svg>
-                                                <span class="text-sm font-medium text-emerald-400">${followers.length.toLocaleString()}</span>
-                                            </div>
-                                        ` : `
-                                            <div class="px-3 py-1.5 rounded-lg bg-white/5">
-                                                <span class="text-sm text-gray-400">Required</span>
-                                            </div>
-                                        `}
-                                    </div>
-                                </label>
-
-                                <!-- Following Upload -->
-                                <label class="upload-zone block rounded-2xl p-6 sm:p-8 cursor-pointer">
-                                    <input
-                                        type="file"
-                                        accept=".json"
-                                        onchange="handleFileUpload(event, 'following')"
-                                    />
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-white font-semibold">Following</p>
-                                            <p class="text-sm text-gray-400">following.json</p>
-                                        </div>
-                                        ${following.length > 0 ? `
-                                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20">
-                                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                </svg>
-                                                <span class="text-sm font-medium text-emerald-400">${following.length.toLocaleString()}</span>
-                                            </div>
-                                        ` : `
-                                            <div class="px-3 py-1.5 rounded-lg bg-white/5">
-                                                <span class="text-sm text-gray-400">Required</span>
-                                            </div>
-                                        `}
-                                    </div>
-                                </label>
-
-                                <!-- Comments Upload (Optional) -->
-                                <label class="upload-zone block rounded-2xl p-6 sm:p-8 cursor-pointer">
-                                    <input
-                                        type="file"
-                                        accept=".json"
-                                        multiple
-                                        onchange="handleCommentsUpload(event)"
-                                    />
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-white font-semibold">Comments</p>
-                                            <p class="text-sm text-gray-400">post_comments_1.json, etc.</p>
-                                        </div>
-                                        ${comments.length > 0 ? `
-                                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20">
-                                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                </svg>
-                                                <span class="text-sm font-medium text-emerald-400">${comments.length.toLocaleString()}</span>
-                                            </div>
-                                        ` : `
-                                            <div class="px-3 py-1.5 rounded-lg bg-white/5">
-                                                <span class="text-sm text-gray-400">Optional</span>
-                                            </div>
-                                        `}
-                                    </div>
-                                </label>
-
-                                <!-- Info Box -->
-                                <div class="glass-card rounded-2xl p-4 sm:p-5">
-                                    <div class="flex gap-3">
-                                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm text-gray-300 font-medium mb-1">How to get your files</p>
-                                            <p class="text-sm text-gray-400">Instagram Settings → Accounts Centre → Your information and permissions → Download your information → Request Download (JSON format)</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Save Button -->
-                                ${followers.length > 0 && following.length > 0 ? `
-                                    <div class="pt-4">
-                                        <button
-                                            onclick="handleSaveAndContinue()"
-                                            class="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl font-semibold text-white hover:opacity-90 transition flex items-center justify-center gap-2"
-                                        >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                            Save & Continue to Dashboard
-                                        </button>
-                                        <p class="text-center text-sm text-gray-500 mt-3">
-                                            ${comments.length > 0 ? `Including ${comments.length.toLocaleString()} comments` : 'No comments included (optional)'}
-                                        </p>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `}
+                        <h1 class="text-display" style="font-size: var(--text-3xl); margin-bottom: var(--space-2);">Upload Data</h1>
+                        <p class="text-secondary">Upload your Instagram export to update your tracking</p>
                     </div>
+
+                    ${isUploading ? `
+                        <div class="glass-card animate-fade-up" style="padding: var(--space-12); text-align: center;">
+                            <div class="spinner spinner-lg mx-auto mb-6"></div>
+                            <p class="text-primary font-medium" style="font-size: var(--text-lg);">Saving your data...</p>
+                            <p class="text-muted mt-2">This will only take a moment</p>
+                        </div>
+                    ` : `
+                        <div class="space-y-4">
+                            <!-- ZIP Upload (Primary) -->
+                            <label
+                                class="upload-zone ${(followers.length > 0 || following.length > 0) ? 'uploaded' : ''} animate-fade-up"
+                                style="display: block; animation-delay: 50ms;"
+                                ondragover="handleDragOver(event)"
+                                ondragleave="handleDragLeave(event)"
+                                ondrop="handleDrop(event, 'zip')"
+                            >
+                                <input type="file" accept=".zip" onchange="handleZipUpload(event)">
+                                <div class="flex items-center gap-4 relative" style="z-index: 1;">
+                                    <div class="upload-icon primary">
+                                        <svg width="24" height="24" fill="none" stroke="white" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-primary font-semibold">Upload Instagram ZIP</p>
+                                        <p class="text-muted text-sm">Drag & drop or click to browse</p>
+                                    </div>
+                                    ${isProcessingZip ? `
+                                        <span class="status-badge processing">
+                                            <div style="width: 14px; height: 14px; border: 2px solid var(--ig-pink); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                                            Processing
+                                        </span>
+                                    ` : (followers.length > 0 || following.length > 0) ? `
+                                        <span class="status-badge success success-icon">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            Ready
+                                        </span>
+                                    ` : `
+                                        <span class="status-badge easiest">Easiest</span>
+                                    `}
+                                </div>
+                                ${isProcessingZip ? `
+                                    <div class="progress-bar mt-4" style="position: relative; z-index: 1;">
+                                        <div class="progress-bar__fill" style="width: ${uploadProgress}%;"></div>
+                                    </div>
+                                    <p class="text-muted text-sm mt-2" style="position: relative; z-index: 1;">${zipStatus}</p>
+                                ` : zipStatus ? `
+                                    <p class="mt-3 text-sm ${zipStatus.includes('Error') || zipStatus.includes('Could not') ? 'text-negative' : 'text-positive'}" style="position: relative; z-index: 1;">
+                                        ${zipStatus}
+                                    </p>
+                                ` : ''}
+                            </label>
+
+                            <div class="divider">
+                                <span>or upload individual files</span>
+                            </div>
+
+                            <!-- Followers Upload -->
+                            <label class="upload-zone ${followers.length > 0 ? 'uploaded' : ''} animate-fade-up" style="display: block; animation-delay: 100ms;">
+                                <input type="file" accept=".json" onchange="handleFileUpload(event, 'followers')">
+                                <div class="flex items-center gap-4 relative" style="z-index: 1;">
+                                    <div class="upload-icon purple">
+                                        <svg width="24" height="24" fill="none" stroke="white" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-primary font-semibold">Followers</p>
+                                        <p class="text-muted text-sm">${followerFilesFound > 1 ? `${followerFilesFound} files found` : 'followers_1.json'}</p>
+                                    </div>
+                                    ${followers.length > 0 ? `
+                                        <span class="status-badge success success-icon">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            ${followers.length.toLocaleString()}
+                                        </span>
+                                    ` : `
+                                        <span class="status-badge required">Required</span>
+                                    `}
+                                </div>
+                            </label>
+
+                            <!-- Following Upload -->
+                            <label class="upload-zone ${following.length > 0 ? 'uploaded' : ''} animate-fade-up" style="display: block; animation-delay: 150ms;">
+                                <input type="file" accept=".json" onchange="handleFileUpload(event, 'following')">
+                                <div class="flex items-center gap-4 relative" style="z-index: 1;">
+                                    <div class="upload-icon pink">
+                                        <svg width="24" height="24" fill="none" stroke="white" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-primary font-semibold">Following</p>
+                                        <p class="text-muted text-sm">following.json</p>
+                                    </div>
+                                    ${following.length > 0 ? `
+                                        <span class="status-badge success success-icon">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            ${following.length.toLocaleString()}
+                                        </span>
+                                    ` : `
+                                        <span class="status-badge required">Required</span>
+                                    `}
+                                </div>
+                            </label>
+
+                            <!-- Comments Upload (Optional) -->
+                            <label class="upload-zone ${comments.length > 0 ? 'uploaded' : ''} animate-fade-up" style="display: block; animation-delay: 200ms;">
+                                <input type="file" accept=".json" multiple onchange="handleCommentsUpload(event)">
+                                <div class="flex items-center gap-4 relative" style="z-index: 1;">
+                                    <div class="upload-icon orange">
+                                        <svg width="24" height="24" fill="none" stroke="white" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-primary font-semibold">Comments</p>
+                                        <p class="text-muted text-sm">${commentFilesFound > 1 ? `${commentFilesFound} files found` : 'post_comments_1.json'}</p>
+                                    </div>
+                                    ${comments.length > 0 ? `
+                                        <span class="status-badge success success-icon">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            ${comments.length.toLocaleString()}
+                                        </span>
+                                    ` : `
+                                        <span class="status-badge optional">Optional</span>
+                                    `}
+                                </div>
+                            </label>
+
+                            <!-- Info Box -->
+                            <div class="glass-card animate-fade-up" style="padding: var(--space-4); animation-delay: 250ms;">
+                                <div class="flex gap-3">
+                                    <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-info-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg width="18" height="18" fill="none" stroke="var(--color-info)" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-primary font-medium text-sm mb-1">How to get your files</p>
+                                        <p class="text-muted text-sm">Instagram Settings → Accounts Centre → Your information and permissions → Download your information → Request Download (JSON format)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Save Button -->
+                            ${followers.length > 0 && following.length > 0 ? `
+                                <div class="animate-fade-up" style="padding-top: var(--space-4); animation-delay: 300ms;">
+                                    <button
+                                        onclick="handleSaveAndContinue()"
+                                        class="btn btn-primary btn-lg w-full"
+                                        style="padding: var(--space-4) var(--space-6);"
+                                    >
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Save & Continue to Dashboard
+                                    </button>
+                                    <p class="text-center text-muted text-sm mt-3">
+                                        ${comments.length > 0 ? `Including ${comments.length.toLocaleString()} comments` : 'No comments included (optional)'}
+                                    </p>
+                                </div>
+                            ` : ''}
+
+                            <!-- Delete Last Upload Section -->
+                            ${lastUploadInfo ? `
+                                <div class="animate-fade-up" style="margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--glass-border); animation-delay: 350ms;">
+                                    <h3 class="text-display text-sm mb-3" style="color: var(--text-muted);">Manage Uploads</h3>
+                                    <div class="glass-card" style="padding: var(--space-4); border: 1px solid var(--color-negative-soft);">
+                                        <div class="flex items-center justify-between gap-4">
+                                            <div>
+                                                <p class="text-primary font-medium text-sm">Last Upload</p>
+                                                <p class="text-muted text-xs">${new Date(lastUploadInfo.timestamp).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                                <p class="text-muted text-xs">${lastUploadInfo.followerCount} followers, ${lastUploadInfo.followingCount} following</p>
+                                            </div>
+                                            <button
+                                                onclick="deleteLastUpload()"
+                                                class="btn btn-sm"
+                                                style="background: var(--color-negative-soft); color: var(--color-negative);"
+                                                ${isDeleting ? 'disabled' : ''}
+                                            >
+                                                ${isDeleting ? `
+                                                    <div style="width: 14px; height: 14px; border: 2px solid var(--color-negative); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                                                    Deleting...
+                                                ` : `
+                                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                    Delete
+                                                `}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `}
                 </div>
             `;
         }
@@ -712,8 +1106,12 @@
         window.handleCommentsUpload = handleCommentsUpload;
         window.handleZipUpload = handleZipUpload;
         window.handleSaveAndContinue = handleSaveAndContinue;
+        window.handleDragOver = handleDragOver;
+        window.handleDragLeave = handleDragLeave;
+        window.handleDrop = handleDrop;
+        window.deleteLastUpload = deleteLastUpload;
 
-        render();
+        init();
     </script>
 </body>
 </html>

@@ -4,876 +4,1506 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instagram Tracker - Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'inter': ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        dark: {
-                            900: '#0f0a1f',
-                            800: '#1a1333',
-                            700: '#251d47',
-                            600: '#2f2557',
-                        },
-                        accent: {
-                            purple: '#8b5cf6',
-                            pink: '#ec4899',
-                            blue: '#3b82f6',
-                            cyan: '#06b6d4',
-                        }
-                    }
-                }
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        /* Page-specific styles */
+        .dashboard-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: var(--space-2);
+        }
+
+        .dashboard-header__title {
+            font-family: var(--font-display);
+            font-size: var(--text-4xl);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        .dashboard-header__subtitle {
+            font-size: var(--text-sm);
+            color: var(--text-muted);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-4);
+        }
+
+        @media (min-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
-    </script>
-    <style>
-        * {
-            font-family: 'Inter', sans-serif;
+
+        .comments-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-4);
         }
-        body {
-            background: linear-gradient(135deg, #0f0a1f 0%, #1a1333 50%, #1e1245 100%);
-            min-height: 100vh;
+
+        @media (min-width: 640px) {
+            .comments-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+
+        .changes-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-4);
         }
-        .glass-card-light {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+
+        @media (min-width: 640px) {
+            .changes-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
-        .stat-card {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .nav-link {
+
+        /* Clickable stat card */
+        .stat-card-clickable {
+            cursor: pointer;
             position: relative;
-            transition: all 0.3s ease;
         }
-        .nav-link:hover {
-            color: #8b5cf6;
-        }
-        .nav-link.active::after {
+
+        .stat-card-clickable::after {
             content: '';
             position: absolute;
-            bottom: -4px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #8b5cf6, #ec4899);
-            border-radius: 2px;
+            bottom: 12px;
+            right: 12px;
+            width: 24px;
+            height: 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: all 0.3s var(--ease-out-expo);
         }
-        .tab-btn {
+
+        .stat-card-clickable:hover::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .stat-card-clickable .stat-card-arrow {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            width: 20px;
+            height: 20px;
+            color: var(--text-muted);
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .stat-card-clickable:hover .stat-card-arrow {
+            opacity: 1;
+            transform: translateX(0);
+            color: var(--text-secondary);
+        }
+
+        .stat-card-clickable:active {
+            transform: scale(0.98);
+        }
+
+        /* Change cards */
+        .change-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .change-card--negative { border-left: 3px solid var(--color-negative); }
+        .change-card--positive { border-left: 3px solid var(--color-positive); }
+
+        .change-card__header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .change-card__icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .change-card__icon--negative {
+            background: var(--color-negative-soft);
+            color: var(--color-negative);
+        }
+
+        .change-card__icon--positive {
+            background: var(--color-positive-soft);
+            color: var(--color-positive);
+        }
+
+        .change-card__value {
+            font-family: var(--font-display);
+            font-size: var(--text-3xl);
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .change-card__label {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+        }
+
+        .change-card__list {
+            margin-top: var(--space-3);
+            padding: var(--space-3);
+            border-radius: var(--radius-lg);
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .change-card__list--negative { background: var(--color-negative-soft); }
+        .change-card__list--positive { background: var(--color-positive-soft); }
+
+        .change-card__list-item {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            padding: 2px 0;
+        }
+
+        .change-card__more {
+            font-size: var(--text-xs);
+            color: var(--text-muted);
+            margin-top: var(--space-2);
+        }
+
+        /* Drawer Styles */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .drawer-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile */
+            background: var(--bg-surface);
+            border-left: 1px solid var(--glass-border);
+            z-index: 201;
+            transform: translateX(100%);
+            transition: transform 0.4s var(--ease-out-expo);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 480px) {
+            .drawer {
+                max-width: 100%;
+                border-left: none;
+            }
+
+            .drawer__header {
+                padding: var(--space-4);
+                padding-top: max(var(--space-4), env(safe-area-inset-top));
+            }
+
+            .drawer__search {
+                padding: var(--space-3) var(--space-4);
+            }
+
+            .drawer__body {
+                padding: var(--space-3) var(--space-4);
+                padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+            }
+        }
+
+        .drawer__header {
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: var(--space-4);
+        }
+
+        .drawer__title {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .drawer__count {
+            font-size: var(--text-sm);
+            color: var(--text-muted);
+            margin-top: var(--space-1);
+        }
+
+        .drawer__close {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .drawer__close:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .drawer__search {
+            padding: var(--space-4) var(--space-6);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .drawer__search-input {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            font-family: var(--font-body);
+            font-size: var(--text-sm);
+            color: var(--text-primary);
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .drawer__search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .drawer__search-input:focus {
+            border-color: var(--ig-pink);
+            box-shadow: 0 0 0 3px rgba(221, 42, 123, 0.1);
+        }
+
+        .drawer__body {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-4) var(--space-6);
+        }
+
+        .drawer__empty {
+            text-align: center;
+            padding: var(--space-12) var(--space-4);
+        }
+
+        .drawer__empty-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto var(--space-4);
+            border-radius: var(--radius-xl);
+            background: var(--color-positive-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-positive);
+        }
+
+        .drawer__empty-text {
+            color: var(--text-secondary);
+            font-size: var(--text-sm);
+        }
+
+        /* Mobile nav */
+        .mobile-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 90;
+            opacity: 0;
+            visibility: hidden;
             transition: all 0.3s ease;
         }
-        .tab-btn.active {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+
+        .mobile-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--glass-border);
+            z-index: 95;
+            padding: var(--space-6);
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .mobile-nav.open { transform: translateX(0); }
+
+        .mobile-nav__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-8);
+        }
+
+        .mobile-nav__links {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .mobile-nav__link {
+            display: block;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .mobile-nav__link:hover {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        .mobile-nav__link.active {
+            background: var(--ig-gradient-soft);
+            color: var(--text-primary);
+        }
+
+        .nav-container {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 var(--space-4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            text-decoration: none;
+        }
+
+        .nav-logo__icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            background: var(--ig-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
         }
-        .tab-btn:not(.active):hover {
-            background: rgba(139, 92, 246, 0.2);
+
+        .nav-logo__text {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: var(--text-lg);
+            color: var(--text-primary);
         }
-        .user-item {
-            transition: all 0.2s ease;
-        }
-        .user-item:hover {
-            background: rgba(139, 92, 246, 0.1);
-            transform: translateX(4px);
-        }
-        .mobile-menu {
+
+        .nav-links {
             display: none;
+            align-items: center;
+            gap: var(--space-1);
         }
-        .mobile-nav {
-            display: none;
+
+        @media (min-width: 768px) {
+            .nav-links { display: flex; }
+            .mobile-menu-btn { display: none !important; }
         }
-        @media (max-width: 768px) {
-            .desktop-nav {
-                display: none;
-            }
-            .mobile-menu {
-                display: block;
-            }
-            .mobile-nav {
-                display: none;
-            }
-            .mobile-nav.open {
-                display: block;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 80%;
-                max-width: 300px;
-                height: 100vh;
-                background: linear-gradient(180deg, #1a1333 0%, #0f0a1f 100%);
-                z-index: 100;
-                padding: 2rem;
-            }
-            .mobile-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.3s ease;
-            }
-            .mobile-overlay.open {
-                opacity: 1;
-                pointer-events: auto;
+
+        .mobile-menu-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
+        }
+
+        .mobile-menu-btn:hover {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        /* Animation delays */
+        .stagger-1 { animation-delay: 0ms; }
+        .stagger-2 { animation-delay: 60ms; }
+        .stagger-3 { animation-delay: 120ms; }
+        .stagger-4 { animation-delay: 180ms; }
+        .stagger-5 { animation-delay: 240ms; }
+
+        /* Skeleton */
+        .skeleton-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-4);
+        }
+
+        @media (min-width: 1024px) {
+            .skeleton-stats-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
-        ::-webkit-scrollbar {
-            width: 8px;
+
+        .skeleton-stat {
+            background: var(--ig-gradient-soft);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
         }
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
+
+        .skeleton-stat__icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-4);
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.5);
-            border-radius: 4px;
+
+        .skeleton-stat__value {
+            height: 36px;
+            width: 60%;
+            margin-bottom: var(--space-2);
+            border-radius: var(--radius-sm);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.7);
+
+        .skeleton-stat__label {
+            height: 14px;
+            width: 80%;
+            border-radius: var(--radius-sm);
+        }
+
+        /* Quick actions grid */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-3);
+        }
+
+        @media (min-width: 768px) {
+            .quick-actions {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .quick-action {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out-expo);
+            text-align: center;
+        }
+
+        .quick-action:hover {
+            background: var(--bg-elevated);
+            border-color: var(--glass-border-hover);
+            transform: translateY(-2px);
+        }
+
+        .quick-action__icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto var(--space-2);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quick-action__label {
+            font-size: var(--text-xs);
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .quick-action__count {
+            font-family: var(--font-display);
+            font-size: var(--text-lg);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: var(--space-1);
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 480px) {
+            .dashboard-header__title {
+                font-size: var(--text-3xl);
+            }
+
+            .stats-grid {
+                gap: var(--space-3);
+            }
+
+            .quick-actions {
+                gap: var(--space-2);
+            }
+
+            .quick-action {
+                padding: var(--space-3);
+            }
+
+            .quick-action__icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .quick-action__count {
+                font-size: var(--text-base);
+            }
+
+            .change-card {
+                padding: var(--space-4);
+            }
+
+            .change-card__icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .change-card__value {
+                font-size: var(--text-2xl);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .changes-grid {
+                gap: var(--space-3);
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 360px) {
+            .dashboard-header__title {
+                font-size: var(--text-2xl);
+            }
+
+            .stats-grid {
+                gap: var(--space-2);
+            }
         }
     </style>
 </head>
-<body class="text-white">
+<body>
     <!-- Mobile Overlay -->
     <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Navigation -->
     <nav class="mobile-nav" id="mobileNav">
-        <div class="flex items-center justify-between mb-8">
-            <span class="text-xl font-bold gradient-text">Instagram Tracker</span>
-            <button onclick="closeMobileMenu()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <div class="mobile-nav__header">
+            <span class="text-gradient text-display" style="font-size: var(--text-xl);">Instagram Tracker</span>
+            <button onclick="closeMobileMenu()" class="btn-ghost btn-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
         </div>
-        <div class="flex flex-col space-y-4">
-            <a href="index.html" class="text-white font-medium py-2 px-4 rounded-lg bg-purple-600/20">Dashboard</a>
-            <a href="analytics.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Analytics</a>
-            <a href="history.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">History</a>
-            <a href="upload.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Upload</a>
+        <div class="mobile-nav__links">
+            <a href="index.html" class="mobile-nav__link active">Dashboard</a>
+            <a href="analytics.html" class="mobile-nav__link">Analytics</a>
+            <a href="history.html" class="mobile-nav__link">History</a>
+            <a href="upload.html" class="mobile-nav__link">Upload Data</a>
         </div>
     </nav>
 
-    <!-- Header -->
-    <header class="glass-card border-t-0 border-l-0 border-r-0 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-bold text-white hidden sm:block">Instagram Tracker</span>
-                </div>
+    <!-- Drawer Overlay -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 
-                <!-- Desktop Navigation -->
-                <nav class="desktop-nav flex items-center space-x-1">
-                    <a href="index.html" class="nav-link active px-4 py-2 text-sm font-medium text-white rounded-lg">Dashboard</a>
-                    <a href="analytics.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Analytics</a>
-                    <a href="history.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">History</a>
-                    <a href="upload.html" class="ml-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition">Upload</a>
-                </nav>
-
-                <!-- Mobile Menu Button -->
-                <button class="mobile-menu p-2 text-gray-400 hover:text-white" onclick="openMobileMenu()">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
+    <!-- Drawer -->
+    <div class="drawer" id="drawer">
+        <div class="drawer__header">
+            <div>
+                <h2 class="drawer__title" id="drawerTitle">Title</h2>
+                <p class="drawer__count" id="drawerCount">0 accounts</p>
             </div>
+            <button class="drawer__close" onclick="closeDrawer()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="drawer__search">
+            <input type="text" class="drawer__search-input" id="drawerSearch" placeholder="Search accounts..." oninput="filterDrawerList()">
+        </div>
+        <div class="drawer__body" id="drawerBody">
+            <!-- Content injected by JS -->
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="nav-header">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <div class="nav-logo__icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <span class="nav-logo__text hide-xs">Instagram Tracker</span>
+            </a>
+
+            <nav class="nav-links">
+                <a href="index.html" class="nav-link active">Dashboard</a>
+                <a href="analytics.html" class="nav-link">Analytics</a>
+                <a href="history.html" class="nav-link">History</a>
+                <a href="upload.html" class="btn btn-primary btn-sm" style="margin-left: var(--space-2);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Upload
+                </a>
+            </nav>
+
+            <button class="mobile-menu-btn" onclick="openMobileMenu()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
         </div>
     </header>
 
     <div id="app"></div>
 
     <script>
+        // ============================================
+        // INLINED COMPONENTS
+        // ============================================
+
+        // Toast Manager
+        const ToastManager = {
+            container: null,
+            init() {
+                if (this.container) return;
+                this.container = document.createElement('div');
+                this.container.style.cssText = `
+                    position: fixed; top: 20px; right: 20px; z-index: 10000;
+                    display: flex; flex-direction: column; gap: 12px;
+                    max-width: 380px; width: calc(100% - 40px); pointer-events: none;
+                `;
+                document.body.appendChild(this.container);
+            },
+            show(message, type = 'info', duration = 4000) {
+                this.init();
+                const colors = {
+                    success: { bg: 'rgba(50, 215, 75, 0.15)', border: 'rgba(50, 215, 75, 0.3)', icon: '#32D74B' },
+                    error: { bg: 'rgba(255, 69, 58, 0.15)', border: 'rgba(255, 69, 58, 0.3)', icon: '#FF453A' },
+                    warning: { bg: 'rgba(255, 159, 10, 0.15)', border: 'rgba(255, 159, 10, 0.3)', icon: '#FF9F0A' },
+                    info: { bg: 'rgba(100, 210, 255, 0.15)', border: 'rgba(100, 210, 255, 0.3)', icon: '#64D2FF' }
+                };
+                const color = colors[type] || colors.info;
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    background: ${color.bg}; backdrop-filter: blur(20px);
+                    border: 1px solid ${color.border}; border-radius: 14px;
+                    padding: 16px; display: flex; align-items: center; gap: 12px;
+                    color: #f5f5f7; font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px;
+                    pointer-events: auto; transform: translateX(120%); opacity: 0;
+                    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                `;
+                toast.innerHTML = `<div style="flex: 1;">${message}</div>`;
+                this.container.appendChild(toast);
+                requestAnimationFrame(() => {
+                    toast.style.transform = 'translateX(0)';
+                    toast.style.opacity = '1';
+                });
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(120%)';
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 400);
+                }, duration);
+            },
+            success(msg) { this.show(msg, 'success'); },
+            error(msg) { this.show(msg, 'error'); },
+            warning(msg) { this.show(msg, 'warning'); },
+            info(msg) { this.show(msg, 'info'); }
+        };
+
+        // Modal System
+        const Modal = {
+            overlay: null,
+            activeModal: null,
+            createOverlay() {
+                if (this.overlay) return this.overlay;
+                this.overlay = document.createElement('div');
+                this.overlay.style.cssText = `
+                    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+                    backdrop-filter: blur(8px); z-index: 9998;
+                    opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                `;
+                this.overlay.addEventListener('click', (e) => {
+                    if (e.target === this.overlay) this.close();
+                });
+                document.body.appendChild(this.overlay);
+                return this.overlay;
+            },
+            open(content, options = {}) {
+                const overlay = this.createOverlay();
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed; top: 50%; left: 50%;
+                    transform: translate(-50%, -50%) scale(0.9);
+                    background: #131419; border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 24px; padding: ${options.padding || '32px'};
+                    max-width: ${options.maxWidth || '420px'}; width: calc(100% - 40px);
+                    z-index: 9999; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+                `;
+                modal.innerHTML = content;
+                document.body.appendChild(modal);
+                this.activeModal = modal;
+                requestAnimationFrame(() => {
+                    overlay.style.opacity = '1';
+                    overlay.style.visibility = 'visible';
+                    modal.style.opacity = '1';
+                    modal.style.transform = 'translate(-50%, -50%) scale(1)';
+                });
+                return modal;
+            },
+            close() {
+                if (!this.activeModal) return;
+                this.overlay.style.opacity = '0';
+                this.overlay.style.visibility = 'hidden';
+                this.activeModal.style.opacity = '0';
+                this.activeModal.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                setTimeout(() => {
+                    if (this.activeModal) {
+                        this.activeModal.remove();
+                        this.activeModal = null;
+                    }
+                }, 300);
+            }
+        };
+
+        // Password Modal
+        const PasswordModal = {
+            show(options = {}) {
+                return new Promise((resolve) => {
+                    const content = `
+                        <div style="text-align: center;">
+                            <div style="width: 64px; height: 64px; margin: 0 auto 24px; border-radius: 20px;
+                                background: linear-gradient(135deg, rgba(245,133,41,0.2), rgba(221,42,123,0.15), rgba(129,52,175,0.1));
+                                display: flex; align-items: center; justify-content: center;">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DD2A7B" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </div>
+                            <h3 style="font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: #f5f5f7; margin-bottom: 8px;">
+                                ${options.title || 'Enter Password'}
+                            </h3>
+                            <p style="font-size: 14px; color: #6e6e73; margin-bottom: 24px;">
+                                Enter your password to access Instagram Tracker
+                            </p>
+                            <input type="password" id="password-input" placeholder="${options.placeholder || 'Password'}"
+                                autocapitalize="off" autocorrect="off" spellcheck="false"
+                                style="width: 100%; padding: 16px; font-family: 'DM Sans', sans-serif; font-size: 16px;
+                                color: #f5f5f7; background: #1a1b21; border: 1px solid rgba(255,255,255,0.1);
+                                border-radius: 14px; outline: none; margin-bottom: 16px;">
+                            <p id="password-error" style="font-size: 13px; color: #FF453A; margin-bottom: 16px; display: none;">
+                                Incorrect password. Please try again.
+                            </p>
+                            <button id="password-submit" style="width: 100%; padding: 16px; font-family: 'DM Sans', sans-serif;
+                                font-size: 15px; font-weight: 600; color: white;
+                                background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF);
+                                border: none; border-radius: 14px; cursor: pointer;">
+                                Continue
+                            </button>
+                        </div>
+                    `;
+                    const modal = Modal.open(content, { padding: '40px' });
+                    const input = modal.querySelector('#password-input');
+                    const submitBtn = modal.querySelector('#password-submit');
+                    const errorText = modal.querySelector('#password-error');
+
+                    setTimeout(() => input.focus(), 100);
+
+                    const handleSubmit = () => {
+                        const password = input.value;
+                        if (password) resolve(password);
+                    };
+
+                    submitBtn.addEventListener('click', handleSubmit);
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') handleSubmit();
+                    });
+
+                    modal.showError = () => {
+                        errorText.style.display = 'block';
+                        input.style.borderColor = 'rgba(255, 69, 58, 0.5)';
+                    };
+                });
+            }
+        };
+
+        // Animated Counter
+        const AnimatedCounter = {
+            animate(element, endValue, duration = 1000) {
+                const startTime = performance.now();
+                const easeOutExpo = (t) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+                const update = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const currentValue = Math.round(endValue * easeOutExpo(progress));
+                    element.textContent = currentValue.toLocaleString();
+                    if (progress < 1) requestAnimationFrame(update);
+                };
+                requestAnimationFrame(update);
+            },
+            initAll(selector = '[data-count]') {
+                document.querySelectorAll(selector).forEach(el => {
+                    const endValue = parseInt(el.dataset.count, 10);
+                    const duration = parseInt(el.dataset.duration, 10) || 1000;
+                    this.animate(el, endValue, duration);
+                });
+            }
+        };
+
+        // Mobile menu
         function openMobileMenu() {
             document.getElementById('mobileNav').classList.add('open');
             document.getElementById('mobileOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
         }
         function closeMobileMenu() {
             document.getElementById('mobileNav').classList.remove('open');
             document.getElementById('mobileOverlay').classList.remove('open');
-        }
-    </script>
-
-    <script type="module">
-        // Password Protection
-        const CORRECT_PASSWORD = "chrisfit";
-
-        function checkPassword() {
-            const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
-            if (storedPassword === CORRECT_PASSWORD) {
-                return true;
-            }
-
-            const password = prompt("Enter password to access Instagram Tracker:");
-            if (password === CORRECT_PASSWORD) {
-                sessionStorage.setItem('instagram_tracker_auth', password);
-                return true;
-            } else if (password !== null) {
-                alert("Incorrect password!");
-                checkPassword();
-            }
-            return false;
+            document.body.style.overflow = '';
         }
 
-        if (!checkPassword()) {
-            document.body.innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-xl text-gray-400">Access Denied</p></div>';
-            throw new Error("Access denied");
+        // Drawer
+        let currentDrawerData = [];
+        let currentDrawerType = '';
+
+        function openDrawer(type, title, data, showAction = false) {
+            currentDrawerData = data;
+            currentDrawerType = type;
+
+            document.getElementById('drawerTitle').textContent = title;
+            document.getElementById('drawerCount').textContent = `${data.length} accounts`;
+            document.getElementById('drawerSearch').value = '';
+
+            renderDrawerList(data, showAction);
+
+            document.getElementById('drawer').classList.add('open');
+            document.getElementById('drawerOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
         }
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDSxtt-88cp4vZlMQz3b1N0BsqNAcTwUyY",
-            authDomain: "instagram-tracker-fda0e.firebaseapp.com",
-            projectId: "instagram-tracker-fda0e",
-            storageBucket: "instagram-tracker-fda0e.firebasestorage.app",
-            messagingSenderId: "1021778226136",
-            appId: "1:1021778226136:web:01920918c68410b9c6a0ad",
-            measurementId: "G-W4RJW473HW"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        let followers = [];
-        let following = [];
-        let comments = [];
-        let isLoaded = false;
-        let activeTab = 'overview';
-        let previousSnapshot = null;
-        let currentSnapshot = null;
-        let changes = null;
-        let isLoading = true;
-        let showUpload = false;
-
-        function showUploadForm() {
-            showUpload = true;
-            isLoaded = false;
-            render();
+        function closeDrawer() {
+            document.getElementById('drawer').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('open');
+            document.body.style.overflow = '';
         }
 
-        async function loadLatestData() {
-            try {
-                isLoading = true;
-                render();
-
-                const q = query(collection(db, "snapshots"), orderBy("timestamp", "desc"), limit(2));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.docs.length === 0) {
-                    isLoading = false;
-                    render();
-                    return;
-                }
-
-                currentSnapshot = querySnapshot.docs[0].data();
-
-                followers = currentSnapshot.followers.map(username => ({
-                    username,
-                    href: `https://www.instagram.com/${username}`
-                }));
-
-                following = currentSnapshot.following.map(username => ({
-                    username,
-                    href: `https://www.instagram.com/${username}`
-                }));
-
-                // Load comments if available
-                if (currentSnapshot.comments) {
-                    comments = currentSnapshot.comments;
-                } else {
-                    comments = [];
-                }
-
-                if (querySnapshot.docs.length >= 2) {
-                    previousSnapshot = querySnapshot.docs[1].data();
-                    calculateChanges();
-                }
-
-                isLoaded = true;
-                isLoading = false;
-                render();
-            } catch (error) {
-                console.error('Error loading data:', error);
-                isLoading = false;
-                render();
-            }
+        function filterDrawerList() {
+            const query = document.getElementById('drawerSearch').value.toLowerCase();
+            const filtered = currentDrawerData.filter(item =>
+                item.username.toLowerCase().includes(query)
+            );
+            const showAction = ['notFollowingBack', 'lostButFollowing', 'wastedComments'].includes(currentDrawerType);
+            renderDrawerList(filtered, showAction);
         }
 
-        function parseFollowersFile(jsonData) {
-            try {
-                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-                return data.map(item => ({
-                    username: item.string_list_data[0]?.value,
-                    href: item.string_list_data[0]?.href,
-                    timestamp: item.string_list_data[0]?.timestamp
-                })).filter(item => item.username);
-            } catch (error) {
-                console.error('Error parsing followers file:', error);
-                alert('Error parsing followers file. Please make sure it is the correct format.');
-                return [];
-            }
-        }
+        function renderDrawerList(data, showAction) {
+            const body = document.getElementById('drawerBody');
 
-        function parseFollowingFile(jsonData) {
-            try {
-                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-                const relationshipsFollowing = data.relationships_following || data;
-                return relationshipsFollowing.map(item => ({
-                    username: item.title,
-                    href: item.string_list_data[0]?.href,
-                    timestamp: item.string_list_data[0]?.timestamp
-                })).filter(item => item.username);
-            } catch (error) {
-                console.error('Error parsing following file:', error);
-                alert('Error parsing following file. Please make sure it is the correct format.');
-                return [];
-            }
-        }
-
-        async function saveSnapshot() {
-            try {
-                const snapshot = {
-                    followers: followers.map(f => f.username),
-                    following: following.map(f => f.username),
-                    timestamp: new Date().toISOString(),
-                    followerCount: followers.length,
-                    followingCount: following.length
-                };
-
-                await addDoc(collection(db, "snapshots"), snapshot);
-                console.log('Snapshot saved successfully');
-            } catch (error) {
-                console.error('Error saving snapshot:', error);
-            }
-        }
-
-        function calculateChanges() {
-            if (!previousSnapshot) {
-                changes = null;
+            if (data.length === 0) {
+                body.innerHTML = `
+                    <div class="drawer__empty">
+                        <div class="drawer__empty-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <p class="drawer__empty-text">No accounts found</p>
+                    </div>
+                `;
                 return;
             }
 
-            const currentFollowers = new Set(followers.map(f => f.username));
-            const previousFollowers = new Set(previousSnapshot.followers);
-
-            const newFollowers = [...currentFollowers].filter(u => !previousFollowers.has(u));
-            const unfollowers = [...previousFollowers].filter(u => !currentFollowers.has(u));
-
-            // Calculate new comments since last upload
-            let newCommentCount = 0;
-            if (comments.length > 0 && previousSnapshot.commentCount !== undefined) {
-                newCommentCount = comments.length - previousSnapshot.commentCount;
-            } else if (comments.length > 0) {
-                newCommentCount = comments.length; // First time with comments
-            }
-
-            changes = {
-                newFollowers,
-                unfollowers,
-                followerChange: followers.length - previousSnapshot.followerCount,
-                followingChange: following.length - previousSnapshot.followingCount,
-                newCommentCount
-            };
-        }
-
-        async function handleFileUpload(event, fileType) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const content = e.target.result;
-                if (fileType === 'followers') {
-                    followers = parseFollowersFile(content);
-                } else {
-                    following = parseFollowingFile(content);
-                }
-
-                if (followers.length > 0 && following.length > 0) {
-                    await loadLatestData();
-                    await saveSnapshot();
-                    await loadLatestData();
-                    isLoaded = true;
-                    showUpload = false;
-                }
-                render();
-            };
-            reader.readAsText(file);
-        }
-
-        function setTab(tab) {
-            activeTab = tab;
-            render();
-        }
-
-        function getAnalysis() {
-            const followerUsernames = new Set(followers.map(f => f.username));
-            const followingUsernames = new Set(following.map(f => f.username));
-
-            const lostButFollowing = changes && changes.unfollowers ?
-                following.filter(f => changes.unfollowers.includes(f.username)) : [];
-
-            return {
-                notFollowingBack: following.filter(f => !followerUsernames.has(f.username)),
-                notFollowedBack: followers.filter(f => !followingUsernames.has(f.username)),
-                mutualFollowers: following.filter(f => followerUsernames.has(f.username)),
-                lostButFollowing
-            };
-        }
-
-        function getCommentAnalysis() {
-            if (comments.length === 0) return null;
-
-            const followerUsernames = new Set(followers.map(f => f.username));
-
-            // Accounts to exclude from analysis
-            const excludedAccounts = new Set(['foreverfitchristine', 'foreverfitchris']);
-
-            // Filter out excluded accounts
-            const filteredComments = comments.filter(c => !excludedAccounts.has(c.username));
-
-            // Calculate 30 days ago in seconds (Unix timestamp)
-            const now = Math.floor(Date.now() / 1000);
-            const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
-
-            // Filter comments to last 30 days
-            const recentComments = filteredComments.filter(c => c.timestamp && c.timestamp >= thirtyDaysAgo);
-
-            // Aggregate ALL comments by username (for total tracking, excluding filtered accounts)
-            const allCommentedAccounts = {};
-            for (const comment of filteredComments) {
-                if (!allCommentedAccounts[comment.username]) {
-                    allCommentedAccounts[comment.username] = {
-                        username: comment.username,
-                        count: 0,
-                        comments: [],
-                        href: `https://www.instagram.com/${comment.username}`
-                    };
-                }
-                allCommentedAccounts[comment.username].count++;
-                allCommentedAccounts[comment.username].comments.push(comment);
-            }
-
-            // Aggregate RECENT comments by username (last 30 days)
-            const recentCommentedAccounts = {};
-            for (const comment of recentComments) {
-                if (!recentCommentedAccounts[comment.username]) {
-                    recentCommentedAccounts[comment.username] = {
-                        username: comment.username,
-                        count: 0,
-                        comments: [],
-                        href: `https://www.instagram.com/${comment.username}`
-                    };
-                }
-                recentCommentedAccounts[comment.username].count++;
-                recentCommentedAccounts[comment.username].comments.push(comment);
-            }
-
-            // Filter recent comments to accounts that don't follow you back
-            const commentingOnNonFollowers = Object.values(recentCommentedAccounts)
-                .filter(account => !followerUsernames.has(account.username))
-                .sort((a, b) => b.count - a.count);
-
-            return {
-                allCommentedAccounts,
-                recentCommentedAccounts,
-                commentingOnNonFollowers,
-                totalComments: filteredComments.length,
-                recentComments: recentComments.length,
-                totalWastedComments: commentingOnNonFollowers.reduce((sum, a) => sum + a.count, 0)
-            };
-        }
-
-        function renderLoading() {
-            return `
-                <div class="flex items-center justify-center min-h-[80vh]">
-                    <div class="text-center">
-                        <div class="relative w-16 h-16 mx-auto mb-6">
-                            <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
-                            <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
+            body.innerHTML = data.map(item => `
+                <div class="user-item">
+                    <div style="display: flex; align-items: center; gap: var(--space-3);">
+                        <div class="user-item__avatar" ${item.count ? 'style="background: var(--color-warning);"' : ''}>
+                            ${item.username.charAt(0).toUpperCase()}
                         </div>
-                        <p class="text-lg text-gray-400">Loading your data...</p>
+                        <div>
+                            <a href="${item.href || 'https://www.instagram.com/' + item.username}"
+                               target="_blank" rel="noopener noreferrer" class="user-item__name">
+                                @${item.username}
+                            </a>
+                            ${item.count ? `<span class="badge badge-warning" style="margin-left: 8px;">${item.count} comments</span>` : ''}
+                        </div>
                     </div>
+                    ${showAction ? `
+                        <a href="${item.href || 'https://www.instagram.com/' + item.username}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-sm" style="background: var(--color-negative-soft); color: var(--color-negative);">
+                            View
+                        </a>
+                    ` : ''}
                 </div>
-            `;
+            `).join('');
         }
 
-        function renderUploadScreen() {
-            return `
-                <div class="px-4 py-12 sm:px-6">
-                    <div class="max-w-lg mx-auto text-center">
-                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                            <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        // Escape key closes drawer
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDrawer();
+        });
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+        // Password Protection
+        const CORRECT_PASSWORD = "chrisfit";
+
+        async function checkPassword() {
+            const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
+            if (storedPassword === CORRECT_PASSWORD) return true;
+
+            try {
+                const password = await PasswordModal.show({
+                    title: 'Welcome Back',
+                    placeholder: 'Enter password'
+                });
+
+                if (password === CORRECT_PASSWORD) {
+                    sessionStorage.setItem('instagram_tracker_auth', password);
+                    Modal.close();
+                    return true;
+                } else {
+                    ToastManager.error('Incorrect password. Please try again.');
+                    return checkPassword();
+                }
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function initApp() {
+            const authenticated = await checkPassword();
+            if (!authenticated) {
+                document.getElementById('app').innerHTML = `
+                    <div class="empty-state" style="min-height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="empty-state__icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                             </svg>
                         </div>
-                        <h1 class="text-2xl sm:text-3xl font-bold text-white mb-3">No Data Found</h1>
-                        <p class="text-gray-400 mb-8">Upload your Instagram data to get started with tracking</p>
-                        <a href="upload.html" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        <h2 class="empty-state__title">Access Denied</h2>
+                        <p class="empty-state__description">Please refresh and enter the correct password.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyDSxtt-88cp4vZlMQz3b1N0BsqNAcTwUyY",
+                authDomain: "instagram-tracker-fda0e.firebaseapp.com",
+                projectId: "instagram-tracker-fda0e",
+                storageBucket: "instagram-tracker-fda0e.firebasestorage.app",
+                messagingSenderId: "1021778226136",
+                appId: "1:1021778226136:web:01920918c68410b9c6a0ad",
+                measurementId: "G-W4RJW473HW"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+
+            let followers = [];
+            let following = [];
+            let comments = [];
+            let isLoaded = false;
+            let previousSnapshot = null;
+            let currentSnapshot = null;
+            let changes = null;
+            let isLoading = true;
+
+            async function loadLatestData() {
+                try {
+                    isLoading = true;
+                    render();
+
+                    const q = query(collection(db, "snapshots"), orderBy("timestamp", "desc"), limit(2));
+                    const querySnapshot = await getDocs(q);
+
+                    if (querySnapshot.docs.length === 0) {
+                        isLoading = false;
+                        render();
+                        return;
+                    }
+
+                    currentSnapshot = querySnapshot.docs[0].data();
+
+                    followers = currentSnapshot.followers.map(username => ({
+                        username,
+                        href: `https://www.instagram.com/${username}`
+                    }));
+
+                    following = currentSnapshot.following.map(username => ({
+                        username,
+                        href: `https://www.instagram.com/${username}`
+                    }));
+
+                    comments = currentSnapshot.comments || [];
+
+                    if (querySnapshot.docs.length >= 2) {
+                        previousSnapshot = querySnapshot.docs[1].data();
+                        calculateChanges();
+                    }
+
+                    isLoaded = true;
+                    isLoading = false;
+                    render();
+
+                    setTimeout(() => AnimatedCounter.initAll(), 100);
+
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    isLoading = false;
+                    ToastManager.error('Failed to load data. Please try again.');
+                    render();
+                }
+            }
+
+            function calculateChanges() {
+                if (!previousSnapshot) {
+                    changes = null;
+                    return;
+                }
+
+                const currentFollowers = new Set(followers.map(f => f.username));
+                const previousFollowers = new Set(previousSnapshot.followers);
+
+                changes = {
+                    newFollowers: [...currentFollowers].filter(u => !previousFollowers.has(u)),
+                    unfollowers: [...previousFollowers].filter(u => !currentFollowers.has(u)),
+                    followerChange: followers.length - previousSnapshot.followerCount,
+                    followingChange: following.length - previousSnapshot.followingCount
+                };
+            }
+
+            function getAnalysis() {
+                const followerUsernames = new Set(followers.map(f => f.username));
+                const followingUsernames = new Set(following.map(f => f.username));
+
+                const lostButFollowing = changes && changes.unfollowers ?
+                    following.filter(f => changes.unfollowers.includes(f.username)) : [];
+
+                return {
+                    notFollowingBack: following.filter(f => !followerUsernames.has(f.username)),
+                    notFollowedBack: followers.filter(f => !followingUsernames.has(f.username)),
+                    mutualFollowers: following.filter(f => followerUsernames.has(f.username)),
+                    lostButFollowing
+                };
+            }
+
+            function getCommentAnalysis() {
+                if (comments.length === 0) return null;
+
+                const followerUsernames = new Set(followers.map(f => f.username));
+                const excludedAccounts = new Set(['foreverfitchristine', 'foreverfitchris']);
+                const filteredComments = comments.filter(c => !excludedAccounts.has(c.username));
+
+                const now = Math.floor(Date.now() / 1000);
+                const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
+                const recentComments = filteredComments.filter(c => c.timestamp && c.timestamp >= thirtyDaysAgo);
+
+                const recentCommentedAccounts = {};
+                for (const comment of recentComments) {
+                    if (!recentCommentedAccounts[comment.username]) {
+                        recentCommentedAccounts[comment.username] = {
+                            username: comment.username,
+                            count: 0,
+                            href: `https://www.instagram.com/${comment.username}`
+                        };
+                    }
+                    recentCommentedAccounts[comment.username].count++;
+                }
+
+                const commentingOnNonFollowers = Object.values(recentCommentedAccounts)
+                    .filter(account => !followerUsernames.has(account.username))
+                    .sort((a, b) => b.count - a.count);
+
+                return {
+                    commentingOnNonFollowers,
+                    totalComments: filteredComments.length,
+                    totalWastedComments: commentingOnNonFollowers.reduce((sum, a) => sum + a.count, 0)
+                };
+            }
+
+            // Make openDrawer available to onclick handlers
+            window.openStatDrawer = function(type) {
+                const analysis = getAnalysis();
+                const commentAnalysis = getCommentAnalysis();
+
+                switch(type) {
+                    case 'notFollowingBack':
+                        openDrawer('notFollowingBack', "Not Following You Back", analysis.notFollowingBack, true);
+                        break;
+                    case 'fans':
+                        openDrawer('fans', "Your Fans (They Follow You)", analysis.notFollowedBack, false);
+                        break;
+                    case 'mutual':
+                        openDrawer('mutual', "Mutual Followers", analysis.mutualFollowers, false);
+                        break;
+                    case 'lostButFollowing':
+                        openDrawer('lostButFollowing', "Lost & Still Following", analysis.lostButFollowing, true);
+                        break;
+                    case 'wastedComments':
+                        if (commentAnalysis) {
+                            openDrawer('wastedComments', "Wasted Comments (30 Days)", commentAnalysis.commentingOnNonFollowers, true);
+                        }
+                        break;
+                }
+            };
+
+            function renderLoading() {
+                return `
+                    <div style="padding: var(--space-6) var(--space-4); max-width: 80rem; margin: 0 auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-8);">
+                            <div>
+                                <div class="skeleton" style="width: 200px; height: 40px; border-radius: var(--radius-md); margin-bottom: var(--space-2);"></div>
+                                <div class="skeleton" style="width: 150px; height: 16px; border-radius: var(--radius-sm);"></div>
+                            </div>
+                            <div class="skeleton" style="width: 140px; height: 44px; border-radius: var(--radius-lg);"></div>
+                        </div>
+                        <div class="skeleton-stats-grid" style="margin-bottom: var(--space-8);">
+                            ${[1,2,3,4].map(() => `
+                                <div class="skeleton-stat">
+                                    <div class="skeleton skeleton-stat__icon"></div>
+                                    <div class="skeleton skeleton-stat__value"></div>
+                                    <div class="skeleton skeleton-stat__label"></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="skeleton" style="width: 100%; height: 200px; border-radius: var(--radius-xl);"></div>
+                    </div>
+                `;
+            }
+
+            function renderEmptyState() {
+                return `
+                    <div class="empty-state" style="min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="empty-state__icon animate-fade-up stagger-1">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h2 class="empty-state__title animate-fade-up stagger-2">No Data Found</h2>
+                        <p class="empty-state__description animate-fade-up stagger-3">Upload your Instagram data export to start tracking</p>
+                        <a href="upload.html" class="btn btn-primary btn-lg animate-fade-up stagger-4">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
                             </svg>
                             Upload Data
                         </a>
                     </div>
-                </div>
-            `;
-        }
-
-        function renderStatCard(title, value, gradient, change, icon) {
-            const changeHtml = change !== undefined && change !== null ? `
-                <div class="flex items-center gap-1 mt-2">
-                    <span class="text-xs font-medium ${change >= 0 ? 'text-emerald-400' : 'text-red-400'}">
-                        ${change >= 0 ? '+' : ''}${change}
-                    </span>
-                    <span class="text-xs text-gray-500">vs last</span>
-                </div>
-            ` : '';
-
-            return `
-                <div class="stat-card rounded-2xl p-5 sm:p-6">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-10 h-10 rounded-xl ${gradient} flex items-center justify-center">
-                            ${icon}
-                        </div>
-                    </div>
-                    <p class="text-2xl sm:text-3xl font-bold text-white mb-1">${value.toLocaleString()}</p>
-                    <p class="text-sm text-gray-400">${title}</p>
-                    ${changeHtml}
-                </div>
-            `;
-        }
-
-        function renderUserList(users, title, emptyMessage, showViewProfile) {
-            if (!showViewProfile) showViewProfile = false;
-
-            return `
-                <div class="glass-card rounded-2xl overflow-hidden">
-                    <div class="p-4 sm:p-6 border-b border-white/5">
-                        <h3 class="text-lg font-semibold text-white">${title}</h3>
-                        <p class="text-sm text-gray-400 mt-1">${users.length} accounts</p>
-                    </div>
-                    <div class="p-4 sm:p-6 max-h-[400px] overflow-y-auto">
-                        ${users.length === 0 ? `
-                            <div class="text-center py-12">
-                                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                    <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                </div>
-                                <p class="text-gray-400">${emptyMessage}</p>
-                            </div>
-                        ` : `
-                            <div class="space-y-2">
-                                ${users.map(user => `
-                                    <div class="user-item flex items-center justify-between p-3 rounded-xl">
-                                        <a
-                                            href="${user.href}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="text-white hover:text-purple-400 font-medium transition"
-                                        >
-                                            @${user.username}
-                                        </a>
-                                        ${showViewProfile ? `
-                                            <a
-                                                href="https://www.instagram.com/${user.username}"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
-                                            >
-                                                View
-                                            </a>
-                                        ` : ''}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderCommentsList(accounts, title, emptyMessage) {
-            return `
-                <div class="glass-card rounded-2xl overflow-hidden">
-                    <div class="p-4 sm:p-6 border-b border-white/5">
-                        <h3 class="text-lg font-semibold text-white">${title}</h3>
-                        <p class="text-sm text-gray-400 mt-1">${accounts.length} accounts (sorted by most comments)</p>
-                    </div>
-                    <div class="p-4 sm:p-6 max-h-[400px] overflow-y-auto">
-                        ${accounts.length === 0 ? `
-                            <div class="text-center py-12">
-                                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                    <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                </div>
-                                <p class="text-gray-400">${emptyMessage}</p>
-                            </div>
-                        ` : `
-                            <div class="space-y-2">
-                                ${accounts.map(account => `
-                                    <div class="user-item flex items-center justify-between p-3 rounded-xl">
-                                        <div class="flex items-center gap-3">
-                                            <a
-                                                href="${account.href}"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="text-white hover:text-purple-400 font-medium transition"
-                                            >
-                                                @${account.username}
-                                            </a>
-                                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">
-                                                ${account.count} comment${account.count !== 1 ? 's' : ''}
-                                            </span>
-                                        </div>
-                                        <a
-                                            href="${account.href}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="text-xs font-medium px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition"
-                                        >
-                                            View
-                                        </a>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderDashboard() {
-            const analysis = getAnalysis();
-            const commentAnalysis = getCommentAnalysis();
-            const lastUpdateDate = currentSnapshot ? new Date(currentSnapshot.timestamp).toLocaleString('en-GB', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }) : 'Never';
-
-            const tabs = [
-                { id: 'overview', label: 'Not Following Back', count: analysis.notFollowingBack.length },
-                { id: 'notFollowed', label: 'Fans Only', count: analysis.notFollowedBack.length },
-                { id: 'mutual', label: 'Mutual', count: analysis.mutualFollowers.length },
-                { id: 'lostButFollowing', label: 'Lost & Following', count: analysis.lostButFollowing.length },
-            ];
-
-            if (commentAnalysis) {
-                tabs.push({ id: 'commentingOnNonFollowers', label: 'Wasted Comments', count: commentAnalysis.commentingOnNonFollowers.length });
+                `;
             }
 
-            return `
-                <div class="px-4 py-6 sm:px-6 sm:py-8">
-                    <div class="max-w-7xl mx-auto">
+            function renderStatCard(title, value, iconHtml, change, onClick = null) {
+                const clickable = onClick ? 'stat-card-clickable' : '';
+                const onClickAttr = onClick ? `onclick="${onClick}"` : '';
+
+                const changeHtml = change !== undefined && change !== null ? `
+                    <div class="stat-card__change ${change >= 0 ? 'stat-card__change--positive' : 'stat-card__change--negative'}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            ${change >= 0 ? '<polyline points="18 15 12 9 6 15"></polyline>' : '<polyline points="6 9 12 15 18 9"></polyline>'}
+                        </svg>
+                        ${change >= 0 ? '+' : ''}${change}
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="stat-card glass-card-hover ${clickable}" ${onClickAttr}>
+                        <div class="stat-card__icon stat-card__icon--gradient">
+                            ${iconHtml}
+                        </div>
+                        <div class="stat-card__value" data-count="${value}" data-duration="1200">${value.toLocaleString()}</div>
+                        <div class="stat-card__label">${title}</div>
+                        ${changeHtml}
+                        ${onClick ? `
+                            <svg class="stat-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            function renderDashboard() {
+                const analysis = getAnalysis();
+                const commentAnalysis = getCommentAnalysis();
+                const lastUpdateDate = currentSnapshot ? new Date(currentSnapshot.timestamp).toLocaleString('en-GB', {
+                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                }) : 'Never';
+
+                return `
+                    <div style="padding: var(--space-6) var(--space-4); max-width: 80rem; margin: 0 auto;">
                         <!-- Header -->
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                            <div>
-                                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">Dashboard</h1>
-                                <p class="text-gray-400 text-sm">Last updated: ${lastUpdateDate}</p>
+                        <div class="animate-fade-up stagger-1" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--space-4); margin-bottom: var(--space-8);">
+                            <div class="dashboard-header">
+                                <h1 class="dashboard-header__title">Dashboard</h1>
+                                <p class="dashboard-header__subtitle">Last updated: ${lastUpdateDate}</p>
                             </div>
-                            <a
-                                href="upload.html"
-                                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-medium text-sm hover:opacity-90 transition"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            <a href="upload.html" class="btn btn-primary">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
                                 </svg>
                                 Upload New Data
                             </a>
                         </div>
 
-                        <!-- Stats Grid -->
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                            ${renderStatCard('Followers', followers.length, 'bg-gradient-to-br from-purple-500 to-purple-600', changes?.followerChange, '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>')}
-                            ${renderStatCard('Following', following.length, 'bg-gradient-to-br from-pink-500 to-pink-600', changes?.followingChange, '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>')}
-                            ${renderStatCard('Not Following Back', analysis.notFollowingBack.length, 'bg-gradient-to-br from-red-500 to-red-600', null, '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>')}
-                            ${renderStatCard('Mutual', analysis.mutualFollowers.length, 'bg-gradient-to-br from-emerald-500 to-emerald-600', null, '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>')}
+                        <!-- Main Stats -->
+                        <div class="stats-grid animate-fade-up stagger-2" style="margin-bottom: var(--space-6);">
+                            ${renderStatCard('Followers', followers.length, `
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            `, changes?.followerChange)}
+                            ${renderStatCard('Following', following.length, `
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <polyline points="17 11 19 13 23 9"></polyline>
+                                </svg>
+                            `, changes?.followingChange)}
+                            ${renderStatCard('Not Following Back', analysis.notFollowingBack.length, `
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                                </svg>
+                            `, null, "openStatDrawer('notFollowingBack')")}
+                            ${renderStatCard('Mutual', analysis.mutualFollowers.length, `
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            `, null, "openStatDrawer('mutual')")}
                         </div>
 
-                        ${commentAnalysis ? `
-                            <!-- Comments Stats -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                                <div class="stat-card rounded-2xl p-5 sm:p-6">
-                                    <div class="flex items-start justify-between mb-3">
-                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                            </svg>
-                                        </div>
+                        <!-- Quick Actions -->
+                        <div class="animate-fade-up stagger-3" style="margin-bottom: var(--space-6);">
+                            <h2 style="font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-4);">Quick Access</h2>
+                            <div class="quick-actions">
+                                <div class="quick-action" onclick="openStatDrawer('fans')">
+                                    <div class="quick-action__icon" style="background: var(--color-positive-soft); color: var(--color-positive);">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
                                     </div>
-                                    <p class="text-2xl sm:text-3xl font-bold text-white mb-1">${commentAnalysis.totalWastedComments}</p>
-                                    <p class="text-sm text-gray-400">Wasted Comments (30 Days)</p>
-                                    <p class="text-xs text-gray-500 mt-1">On ${commentAnalysis.commentingOnNonFollowers.length} non-followers</p>
+                                    <div class="quick-action__label">Your Fans</div>
+                                    <div class="quick-action__count">${analysis.notFollowedBack.length}</div>
                                 </div>
-                                <div class="stat-card rounded-2xl p-5 sm:p-6">
-                                    <div class="flex items-start justify-between mb-3">
-                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                <div class="quick-action" onclick="openStatDrawer('lostButFollowing')">
+                                    <div class="quick-action__icon" style="background: var(--color-negative-soft); color: var(--color-negative);">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="8.5" cy="7" r="4"></circle>
+                                            <line x1="18" y1="8" x2="23" y2="13"></line>
+                                            <line x1="23" y1="8" x2="18" y2="13"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="quick-action__label">Lost & Following</div>
+                                    <div class="quick-action__count">${analysis.lostButFollowing.length}</div>
+                                </div>
+                                ${commentAnalysis ? `
+                                    <div class="quick-action" onclick="openStatDrawer('wastedComments')">
+                                        <div class="quick-action__icon" style="background: var(--color-warning-soft); color: var(--color-warning);">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                                             </svg>
                                         </div>
+                                        <div class="quick-action__label">Wasted Comments</div>
+                                        <div class="quick-action__count">${commentAnalysis.totalWastedComments}</div>
                                     </div>
-                                    <p class="text-2xl sm:text-3xl font-bold text-white mb-1">${commentAnalysis.totalComments}</p>
-                                    <p class="text-sm text-gray-400">Total Comments Tracked</p>
-                                    ${changes && changes.newCommentCount > 0 ? `
-                                        <p class="text-xs text-emerald-400 mt-1">+${changes.newCommentCount} since last upload</p>
-                                    ` : `
-                                        <p class="text-xs text-gray-500 mt-1">Across ${Object.keys(commentAnalysis.allCommentedAccounts).length} accounts</p>
-                                    `}
+                                ` : ''}
+                                <div class="quick-action" onclick="openStatDrawer('notFollowingBack')">
+                                    <div class="quick-action__icon" style="background: var(--ig-gradient-soft); color: var(--ig-pink);">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="quick-action__label">Unfollow List</div>
+                                    <div class="quick-action__count">${analysis.notFollowingBack.length}</div>
                                 </div>
                             </div>
-                        ` : ''}
+                        </div>
 
                         ${changes ? `
-                            <!-- Changes Cards -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                                <div class="glass-card rounded-2xl p-5 sm:p-6 border-l-4 border-red-500">
-                                    <div class="flex items-center gap-3 mb-3">
-                                        <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
-                                            </svg>
+                            <!-- Changes -->
+                            <div class="animate-fade-up stagger-4" style="margin-bottom: var(--space-6);">
+                                <h2 style="font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-4);">Recent Changes</h2>
+                                <div class="changes-grid">
+                                    <div class="change-card change-card--negative">
+                                        <div class="change-card__header">
+                                            <div class="change-card__icon change-card__icon--negative">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                                                    <polyline points="17 18 23 18 23 12"></polyline>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="change-card__value" style="color: var(--color-negative);">${changes.unfollowers.length}</div>
+                                                <div class="change-card__label">Lost Followers</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p class="text-2xl font-bold text-red-400">${changes.unfollowers.length}</p>
-                                            <p class="text-sm text-gray-400">Lost Followers</p>
-                                        </div>
+                                        ${changes.unfollowers.length > 0 ? `
+                                            <div class="change-card__list change-card__list--negative">
+                                                ${changes.unfollowers.slice(0, 5).map(u => `<div class="change-card__list-item">@${u}</div>`).join('')}
+                                            </div>
+                                            ${changes.unfollowers.length > 5 ? `<div class="change-card__more">+${changes.unfollowers.length - 5} more</div>` : ''}
+                                        ` : ''}
                                     </div>
-                                    ${changes.unfollowers.length > 0 ? `
-                                        <div class="mt-3 p-3 rounded-xl bg-red-500/10 max-h-24 overflow-y-auto">
-                                            ${changes.unfollowers.slice(0, 5).map(u => `<p class="text-sm text-gray-300">@${u}</p>`).join('')}
-                                            ${changes.unfollowers.length > 5 ? `<p class="text-xs text-gray-500 mt-2">+${changes.unfollowers.length - 5} more</p>` : ''}
+                                    <div class="change-card change-card--positive">
+                                        <div class="change-card__header">
+                                            <div class="change-card__icon change-card__icon--positive">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                                    <polyline points="17 6 23 6 23 12"></polyline>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="change-card__value" style="color: var(--color-positive);">${changes.newFollowers.length}</div>
+                                                <div class="change-card__label">New Followers</div>
+                                            </div>
                                         </div>
-                                    ` : ''}
-                                </div>
-                                <div class="glass-card rounded-2xl p-5 sm:p-6 border-l-4 border-emerald-500">
-                                    <div class="flex items-center gap-3 mb-3">
-                                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-2xl font-bold text-emerald-400">${changes.newFollowers.length}</p>
-                                            <p class="text-sm text-gray-400">New Followers</p>
-                                        </div>
+                                        ${changes.newFollowers.length > 0 ? `
+                                            <div class="change-card__list change-card__list--positive">
+                                                ${changes.newFollowers.slice(0, 5).map(u => `<div class="change-card__list-item">@${u}</div>`).join('')}
+                                            </div>
+                                            ${changes.newFollowers.length > 5 ? `<div class="change-card__more">+${changes.newFollowers.length - 5} more</div>` : ''}
+                                        ` : ''}
                                     </div>
-                                    ${changes.newFollowers.length > 0 ? `
-                                        <div class="mt-3 p-3 rounded-xl bg-emerald-500/10 max-h-24 overflow-y-auto">
-                                            ${changes.newFollowers.slice(0, 5).map(u => `<p class="text-sm text-gray-300">@${u}</p>`).join('')}
-                                            ${changes.newFollowers.length > 5 ? `<p class="text-xs text-gray-500 mt-2">+${changes.newFollowers.length - 5} more</p>` : ''}
-                                        </div>
-                                    ` : ''}
                                 </div>
                             </div>
                         ` : ''}
 
-                        <!-- Tabs -->
-                        <div class="glass-card rounded-2xl p-2 mb-6 overflow-x-auto">
-                            <div class="flex gap-2 min-w-max">
-                                ${tabs.map(tab => `
-                                    <button
-                                        onclick="setTab('${tab.id}')"
-                                        class="tab-btn px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap ${activeTab === tab.id ? 'active' : 'text-gray-400'}"
-                                    >
-                                        ${tab.label}
-                                        <span class="ml-1.5 text-xs opacity-70">${tab.count}</span>
-                                    </button>
-                                `).join('')}
+                        ${commentAnalysis ? `
+                            <!-- Comment Stats -->
+                            <div class="animate-fade-up stagger-5">
+                                <h2 style="font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-4);">Comment Tracking</h2>
+                                <div class="comments-grid">
+                                    <div class="stat-card glass-card-hover stat-card-clickable" onclick="openStatDrawer('wastedComments')">
+                                        <div class="stat-card__icon" style="background: var(--color-warning-soft); color: var(--color-warning);">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="stat-card__value" data-count="${commentAnalysis.totalWastedComments}" data-duration="1200">${commentAnalysis.totalWastedComments}</div>
+                                        <div class="stat-card__label">Wasted Comments (30 Days)</div>
+                                        <p style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1);">On ${commentAnalysis.commentingOnNonFollowers.length} non-followers</p>
+                                        <svg class="stat-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="stat-card glass-card-hover">
+                                        <div class="stat-card__icon" style="background: var(--color-info-soft); color: var(--color-info);">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="stat-card__value" data-count="${commentAnalysis.totalComments}" data-duration="1200">${commentAnalysis.totalComments}</div>
+                                        <div class="stat-card__label">Total Comments Tracked</div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-
-                        <!-- Tab Content -->
-                        ${activeTab === 'overview' ? renderUserList(
-                            analysis.notFollowingBack,
-                            'People You Follow Who Don\'t Follow Back',
-                            'Everyone you follow follows you back!',
-                            true
-                        ) : ''}
-
-                        ${activeTab === 'notFollowed' ? renderUserList(
-                            analysis.notFollowedBack,
-                            'People Who Only Follow You (Fans)',
-                            'You follow back everyone who follows you!',
-                            false
-                        ) : ''}
-
-                        ${activeTab === 'mutual' ? renderUserList(
-                            analysis.mutualFollowers,
-                            'Mutual Followers',
-                            'No mutual followers yet',
-                            false
-                        ) : ''}
-
-                        ${activeTab === 'lostButFollowing' ? renderUserList(
-                            analysis.lostButFollowing,
-                            'Lost Followers You Still Follow',
-                            changes ? 'No one unfollowed you since last upload!' : 'Upload new data to track unfollowers',
-                            true
-                        ) : ''}
-
-                        ${activeTab === 'commentingOnNonFollowers' && commentAnalysis ? renderCommentsList(
-                            commentAnalysis.commentingOnNonFollowers,
-                            'Wasted Engagement - Last 30 Days',
-                            'No wasted engagement in the last 30 days!'
-                        ) : ''}
+                        ` : ''}
                     </div>
-                </div>
-            `;
-        }
-
-        function render() {
-            const app = document.getElementById('app');
-            if (isLoading) {
-                app.innerHTML = renderLoading();
-            } else if (!isLoaded) {
-                app.innerHTML = renderUploadScreen();
-            } else {
-                app.innerHTML = renderDashboard();
+                `;
             }
+
+            function render() {
+                const app = document.getElementById('app');
+                if (isLoading) {
+                    app.innerHTML = renderLoading();
+                } else if (!isLoaded) {
+                    app.innerHTML = renderEmptyState();
+                } else {
+                    app.innerHTML = renderDashboard();
+                }
+            }
+
+            loadLatestData();
         }
 
-        window.handleFileUpload = handleFileUpload;
-        window.setTab = setTab;
-        window.showUploadForm = showUploadForm;
-
-        loadLatestData();
+        initApp();
     </script>
 </body>
 </html>

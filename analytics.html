@@ -3,214 +3,650 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Tracker - Analytics</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Analytics | Instagram Tracker</title>
+    <link rel="stylesheet" href="styles/main.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'inter': ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        * {
-            font-family: 'Inter', sans-serif;
+        /* Goal Circle Styles */
+        .goal-circle {
+            position: relative;
+            width: 200px;
+            height: 200px;
         }
-        body {
-            background: linear-gradient(135deg, #0f0a1f 0%, #1a1333 50%, #1e1245 100%);
-            min-height: 100vh;
+
+        .goal-circle__svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+
+        .goal-circle__bg {
+            fill: none;
+            stroke: var(--bg-elevated);
+            stroke-width: 12;
         }
-        .stat-card {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+
+        .goal-circle__progress {
+            fill: none;
+            stroke: url(#goalGradient);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 565.48;
+            stroke-dashoffset: 565.48;
+            transition: stroke-dashoffset 1.5s var(--ease-out-expo);
         }
-        .gradient-text {
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+
+        .goal-circle__content {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .goal-circle__percentage {
+            font-family: var(--font-display);
+            font-size: var(--text-4xl);
+            font-weight: 800;
+            background: var(--ig-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            line-height: 1;
         }
-        .nav-link {
-            position: relative;
-            transition: all 0.3s ease;
+
+        .goal-circle__label {
+            font-size: var(--text-sm);
+            color: var(--text-muted);
+            margin-top: var(--space-1);
         }
-        .nav-link:hover {
-            color: #8b5cf6;
-        }
-        .nav-link.active::after {
-            content: '';
+
+        /* Goal Edit Button */
+        .goal-edit-btn {
             position: absolute;
-            bottom: -4px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #8b5cf6, #ec4899);
-            border-radius: 2px;
+            top: var(--space-4);
+            right: var(--space-4);
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--duration-base) var(--ease-out-expo);
         }
+
+        .goal-edit-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--glass-border-hover);
+        }
+
+        /* Weekly Growth Bars */
+        .growth-bar {
+            height: 100%;
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+            transition: all var(--duration-base) var(--ease-out-expo);
+            position: relative;
+        }
+
+        .growth-bar.positive {
+            background: linear-gradient(180deg, var(--color-positive) 0%, rgba(50, 215, 75, 0.5) 100%);
+        }
+
+        .growth-bar.negative {
+            background: linear-gradient(0deg, var(--color-negative) 0%, rgba(255, 69, 58, 0.5) 100%);
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        }
+
+        .growth-bar:hover {
+            transform: scaleY(1.05);
+            filter: brightness(1.1);
+        }
+
+        /* Insight Cards */
+        .insight-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+        }
+
+        .insight-card__icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .insight-card__icon.positive {
+            background: var(--color-positive-soft);
+            color: var(--color-positive);
+        }
+
+        .insight-card__icon.negative {
+            background: var(--color-negative-soft);
+            color: var(--color-negative);
+        }
+
+        .insight-card__icon.info {
+            background: var(--color-info-soft);
+            color: var(--color-info);
+        }
+
+        .insight-card__icon.warning {
+            background: var(--color-warning-soft);
+            color: var(--color-warning);
+        }
+
+        /* Goal Tracker Layout */
+        .goal-tracker-layout {
+            display: flex;
+            align-items: center;
+            gap: var(--space-8);
+        }
+
+        .goal-tracker-info {
+            flex: 1;
+        }
+
+        @media (max-width: 640px) {
+            .goal-tracker-layout {
+                flex-direction: column;
+                gap: var(--space-4);
+                text-align: center;
+            }
+
+            .goal-tracker-info {
+                width: 100%;
+            }
+
+            .trajectory-badge {
+                justify-content: center;
+            }
+        }
+
+        /* Trajectory Badge */
+        .trajectory-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: var(--ig-gradient-soft);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        /* Mobile Nav Styles */
         .mobile-menu {
             display: none;
         }
+
         .mobile-nav {
             display: none;
         }
+
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--duration-base) var(--ease-out-expo);
+        }
+
+        .mobile-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-nav.open {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-deep);
+            z-index: 100;
+            padding: var(--space-6);
+            transform: translateX(0);
+            animation: slideInLeft var(--duration-slow) var(--ease-out-expo);
+        }
+
         @media (max-width: 768px) {
             .desktop-nav {
                 display: none;
             }
             .mobile-menu {
-                display: block;
+                display: flex;
             }
-            .mobile-nav.open {
-                display: block;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 80%;
-                max-width: 300px;
-                height: 100vh;
-                background: linear-gradient(180deg, #1a1333 0%, #0f0a1f 100%);
-                z-index: 100;
-                padding: 2rem;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 640px) {
+            .goal-circle {
+                width: 160px;
+                height: 160px;
             }
-            .mobile-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
+
+            .goal-circle__bg,
+            .goal-circle__progress {
+                stroke-width: 10;
+            }
+
+            .goal-circle__progress {
+                stroke-dasharray: 452.39;
+                stroke-dashoffset: 452.39;
+            }
+
+            .goal-circle__percentage {
+                font-size: var(--text-3xl);
+            }
+
+            .trajectory-badge {
+                font-size: var(--text-xs);
+                padding: var(--space-1) var(--space-2);
+            }
+
+            .insight-card {
+                padding: var(--space-3);
+            }
+
+            .insight-card__icon {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .goal-circle {
+                width: 140px;
+                height: 140px;
+            }
+
+            .goal-circle__bg,
+            .goal-circle__progress {
+                stroke-width: 8;
+            }
+
+            .goal-circle__progress {
+                stroke-dasharray: 395.84;
+                stroke-dashoffset: 395.84;
+            }
+
+            .goal-circle__percentage {
+                font-size: var(--text-2xl);
+            }
+
+            .goal-circle__label {
+                font-size: var(--text-xs);
+            }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--duration-base) var(--ease-out-expo);
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.95) translateY(10px);
+            transition: transform var(--duration-base) var(--ease-out-expo);
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: var(--text-base);
+            outline: none;
+            transition: border-color var(--duration-fast);
+        }
+
+        .modal-input:focus {
+            border-color: var(--ig-pink);
+        }
+
+        .modal-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Toast Styles */
+        .toast-container {
+            position: fixed;
+            top: var(--space-4);
+            right: var(--space-4);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .toast {
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-4);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            min-width: 280px;
+            max-width: 400px;
+            animation: slideInRight var(--duration-slow) var(--ease-out-expo);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.success { border-left: 3px solid var(--color-positive); }
+        .toast.error { border-left: 3px solid var(--color-negative); }
+        .toast.info { border-left: 3px solid var(--color-info); }
+
+        .toast-exit {
+            animation: slideOutRight var(--duration-base) var(--ease-out-expo) forwards;
+        }
+
+        @keyframes slideOutRight {
+            to {
                 opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.3s ease;
+                transform: translateX(100%);
             }
-            .mobile-overlay.open {
-                opacity: 1;
-                pointer-events: auto;
-            }
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.5);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.7);
         }
     </style>
 </head>
-<body class="text-white">
+<body>
     <!-- Mobile Overlay -->
     <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Navigation -->
     <nav class="mobile-nav" id="mobileNav">
         <div class="flex items-center justify-between mb-8">
-            <span class="text-xl font-bold gradient-text">Instagram Tracker</span>
-            <button onclick="closeMobileMenu()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <span class="text-display text-gradient" style="font-size: var(--text-xl);">Instagram Tracker</span>
+            <button onclick="closeMobileMenu()" class="btn-ghost btn-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
-        <div class="flex flex-col space-y-4">
-            <a href="index.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Dashboard</a>
-            <a href="analytics.html" class="text-white font-medium py-2 px-4 rounded-lg bg-purple-600/20">Analytics</a>
-            <a href="history.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">History</a>
-            <a href="upload.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Upload</a>
+        <div class="flex flex-col gap-2">
+            <a href="index.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">Dashboard</a>
+            <a href="analytics.html" class="nav-link active" style="display: block; padding: var(--space-3) var(--space-4); background: var(--bg-elevated); border-radius: var(--radius-lg);">Analytics</a>
+            <a href="history.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">History</a>
+            <a href="upload.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">Upload</a>
         </div>
     </nav>
 
     <!-- Header -->
-    <header class="glass-card border-t-0 border-l-0 border-r-0 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+    <header class="nav-header">
+        <div class="max-w-7xl mx-auto px-4" style="padding-left: var(--space-4); padding-right: var(--space-4);">
+            <div class="flex items-center justify-between" style="height: 64px;">
+                <div class="flex items-center gap-3">
+                    <div style="width: 36px; height: 36px; border-radius: var(--radius-lg); background: var(--ig-gradient); display: flex; align-items: center; justify-content: center;">
+                        <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
-                    <span class="text-lg font-bold text-white hidden sm:block">Instagram Tracker</span>
+                    <span class="text-display text-primary md:block hidden" style="font-size: var(--text-lg);">Instagram Tracker</span>
                 </div>
 
                 <!-- Desktop Navigation -->
-                <nav class="desktop-nav flex items-center space-x-1">
-                    <a href="index.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Dashboard</a>
-                    <a href="analytics.html" class="nav-link active px-4 py-2 text-sm font-medium text-white rounded-lg">Analytics</a>
-                    <a href="history.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">History</a>
-                    <a href="upload.html" class="ml-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition">Upload</a>
+                <nav class="desktop-nav flex items-center gap-1">
+                    <a href="index.html" class="nav-link">Dashboard</a>
+                    <a href="analytics.html" class="nav-link active">Analytics</a>
+                    <a href="history.html" class="nav-link">History</a>
+                    <a href="upload.html" class="btn btn-primary btn-sm" style="margin-left: var(--space-2);">Upload</a>
                 </nav>
 
                 <!-- Mobile Menu Button -->
-                <button class="mobile-menu p-2 text-gray-400 hover:text-white" onclick="openMobileMenu()">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                <button class="mobile-menu btn-ghost btn-icon" onclick="openMobileMenu()">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
             </div>
         </div>
     </header>
 
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Password Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-content">
+            <h3 class="text-display mb-4" style="font-size: var(--text-xl);">Enter Password</h3>
+            <p class="text-secondary mb-4" style="font-size: var(--text-sm);">This page is password protected.</p>
+            <input type="password" id="passwordInput" class="modal-input mb-4" placeholder="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+            <div class="flex gap-3">
+                <button onclick="submitPassword()" class="btn btn-primary flex-1">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Edit Modal -->
+    <div class="modal-overlay" id="goalModal">
+        <div class="modal-content">
+            <h3 class="text-display mb-4" style="font-size: var(--text-xl);">Set Follower Goal</h3>
+            <p class="text-secondary mb-4" style="font-size: var(--text-sm);">Enter your target follower count to track progress.</p>
+            <input type="number" id="goalInput" class="modal-input mb-4" placeholder="e.g., 10000" min="0">
+            <div class="flex gap-3">
+                <button onclick="closeGoalModal()" class="btn btn-secondary flex-1">Cancel</button>
+                <button onclick="saveGoal()" class="btn btn-primary flex-1">Save Goal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
     <div id="app"></div>
 
     <script>
+        // ============================================
+        // INLINED COMPONENTS
+        // ============================================
+
+        // Toast Manager
+        const ToastManager = {
+            container: null,
+            init() {
+                this.container = document.getElementById('toastContainer');
+            },
+            show(message, type = 'info', duration = 4000) {
+                if (!this.container) this.init();
+
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+
+                const icons = {
+                    success: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+                    error: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+                    info: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                };
+
+                const iconColors = {
+                    success: 'var(--color-positive)',
+                    error: 'var(--color-negative)',
+                    info: 'var(--color-info)'
+                };
+
+                toast.innerHTML = `
+                    <span style="color: ${iconColors[type]}">${icons[type]}</span>
+                    <span style="color: var(--text-primary); font-size: var(--text-sm);">${message}</span>
+                `;
+
+                this.container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.classList.add('toast-exit');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            },
+            success(msg) { this.show(msg, 'success'); },
+            error(msg) { this.show(msg, 'error'); },
+            info(msg) { this.show(msg, 'info'); }
+        };
+
+        // Animated Counter
+        const AnimatedCounter = {
+            animate(element, endValue, duration = 1000) {
+                const startValue = 0;
+                const startTime = performance.now();
+
+                const easeOutExpo = (t) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+
+                const updateCounter = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const easedProgress = easeOutExpo(progress);
+                    const currentValue = Math.round(startValue + (endValue - startValue) * easedProgress);
+
+                    element.textContent = currentValue.toLocaleString();
+
+                    if (progress < 1) {
+                        requestAnimationFrame(updateCounter);
+                    }
+                };
+
+                requestAnimationFrame(updateCounter);
+            },
+            initAll(selector = '[data-count]') {
+                document.querySelectorAll(selector).forEach(el => {
+                    const target = parseInt(el.dataset.count, 10);
+                    if (!isNaN(target)) {
+                        this.animate(el, target);
+                    }
+                });
+            }
+        };
+
+        // ============================================
+        // MOBILE MENU
+        // ============================================
         function openMobileMenu() {
             document.getElementById('mobileNav').classList.add('open');
             document.getElementById('mobileOverlay').classList.add('open');
         }
+
         function closeMobileMenu() {
             document.getElementById('mobileNav').classList.remove('open');
             document.getElementById('mobileOverlay').classList.remove('open');
         }
-    </script>
 
-    <script type="module">
-        // Password Protection
+        // ============================================
+        // PASSWORD PROTECTION
+        // ============================================
         const CORRECT_PASSWORD = "chrisfit";
+        let passwordResolve = null;
 
         function checkPassword() {
             const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
             if (storedPassword === CORRECT_PASSWORD) {
-                return true;
+                return Promise.resolve(true);
             }
 
-            const password = prompt("Enter password to access Instagram Tracker:");
+            return new Promise((resolve) => {
+                passwordResolve = resolve;
+                document.getElementById('passwordModal').classList.add('open');
+                document.getElementById('passwordInput').focus();
+            });
+        }
+
+        function submitPassword() {
+            const password = document.getElementById('passwordInput').value;
             if (password === CORRECT_PASSWORD) {
                 sessionStorage.setItem('instagram_tracker_auth', password);
-                return true;
-            } else if (password !== null) {
-                alert("Incorrect password!");
-                checkPassword();
+                document.getElementById('passwordModal').classList.remove('open');
+                if (passwordResolve) passwordResolve(true);
+            } else {
+                ToastManager.error('Incorrect password');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
             }
-            return false;
         }
 
-        if (!checkPassword()) {
-            document.body.innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-xl text-gray-400">Access Denied</p></div>';
-            throw new Error("Access denied");
+        document.getElementById('passwordInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitPassword();
+        });
+
+        // ============================================
+        // GOAL MANAGEMENT
+        // ============================================
+        function openGoalModal() {
+            const currentGoal = localStorage.getItem('follower_goal') || '';
+            document.getElementById('goalInput').value = currentGoal;
+            document.getElementById('goalModal').classList.add('open');
+            document.getElementById('goalInput').focus();
         }
 
+        function closeGoalModal() {
+            document.getElementById('goalModal').classList.remove('open');
+        }
+
+        function saveGoal() {
+            const goal = parseInt(document.getElementById('goalInput').value, 10);
+            if (goal && goal > 0) {
+                localStorage.setItem('follower_goal', goal);
+                ToastManager.success('Goal saved!');
+                closeGoalModal();
+                render();
+            } else {
+                ToastManager.error('Please enter a valid goal');
+            }
+        }
+
+        document.getElementById('goalInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveGoal();
+        });
+
+        // Close modals on overlay click
+        document.getElementById('goalModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'goalModal') closeGoalModal();
+        });
+    </script>
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
         import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
@@ -229,8 +665,20 @@
 
         let snapshots = [];
         let isLoading = true;
-        let followerChart = null;
-        let ratioChart = null;
+        let charts = {};
+
+        // Make render available globally
+        window.render = render;
+
+        async function init() {
+            const authenticated = await checkPassword();
+            if (!authenticated) {
+                document.getElementById('app').innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-secondary">Access Denied</p></div>';
+                return;
+            }
+
+            await loadAllSnapshots();
+        }
 
         async function loadAllSnapshots() {
             try {
@@ -246,126 +694,59 @@
                 render();
 
                 if (snapshots.length > 0) {
-                    setTimeout(createCharts, 100);
+                    setTimeout(() => {
+                        createCharts();
+                        AnimatedCounter.initAll();
+                    }, 100);
                 }
             } catch (error) {
                 console.error('Error loading snapshots:', error);
                 isLoading = false;
                 render();
+                ToastManager.error('Failed to load data');
             }
         }
 
-        function createCharts() {
-            const dates = snapshots.map(s => {
-                const date = new Date(s.timestamp);
-                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-            });
-            const followerCounts = snapshots.map(s => s.followerCount);
-            const followingCounts = snapshots.map(s => s.followingCount);
+        function calculateWeeklyGrowth() {
+            if (snapshots.length < 2) return [];
 
-            Chart.defaults.color = '#9ca3af';
-            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+            const weeklyData = [];
+            let currentWeekStart = null;
+            let weekStartFollowers = null;
 
-            // Follower Growth Chart
-            const followerCtx = document.getElementById('followerChart');
-            if (followerCtx && !followerChart) {
-                followerChart = new Chart(followerCtx, {
-                    type: 'line',
-                    data: {
-                        labels: dates,
-                        datasets: [
-                            {
-                                label: 'Followers',
-                                data: followerCounts,
-                                borderColor: '#8B5CF6',
-                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                                tension: 0.4,
-                                fill: true
-                            },
-                            {
-                                label: 'Following',
-                                data: followingCounts,
-                                borderColor: '#EC4899',
-                                backgroundColor: 'rgba(236, 72, 153, 0.1)',
-                                tension: 0.4,
-                                fill: true
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top',
-                                labels: { color: '#9ca3af' }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: false,
-                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                                ticks: { color: '#9ca3af' }
-                            },
-                            x: {
-                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                                ticks: { color: '#9ca3af' }
-                            }
-                        }
+            snapshots.forEach((snapshot, index) => {
+                const date = new Date(snapshot.timestamp);
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                weekStart.setHours(0, 0, 0, 0);
+
+                const weekKey = weekStart.toISOString().split('T')[0];
+
+                if (currentWeekStart !== weekKey) {
+                    if (currentWeekStart !== null && weekStartFollowers !== null) {
+                        const prevSnapshot = snapshots[index - 1];
+                        weeklyData.push({
+                            week: currentWeekStart,
+                            change: prevSnapshot.followerCount - weekStartFollowers,
+                            endCount: prevSnapshot.followerCount
+                        });
                     }
+                    currentWeekStart = weekKey;
+                    weekStartFollowers = snapshot.followerCount;
+                }
+            });
+
+            // Add final week
+            if (currentWeekStart && weekStartFollowers !== null) {
+                const lastSnapshot = snapshots[snapshots.length - 1];
+                weeklyData.push({
+                    week: currentWeekStart,
+                    change: lastSnapshot.followerCount - weekStartFollowers,
+                    endCount: lastSnapshot.followerCount
                 });
             }
 
-            // Follower/Following Ratio Chart
-            const ratios = snapshots.map(s => {
-                const ratio = s.followerCount / s.followingCount;
-                return ratio.toFixed(2);
-            });
-
-            const ratioCtx = document.getElementById('ratioChart');
-            if (ratioCtx && !ratioChart) {
-                ratioChart = new Chart(ratioCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: dates,
-                        datasets: [{
-                            label: 'Follower/Following Ratio',
-                            data: ratios,
-                            backgroundColor: snapshots.map(s => {
-                                const ratio = s.followerCount / s.followingCount;
-                                return ratio >= 1 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)';
-                            }),
-                            borderColor: snapshots.map(s => {
-                                const ratio = s.followerCount / s.followingCount;
-                                return ratio >= 1 ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)';
-                            }),
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                labels: { color: '#9ca3af' }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                                ticks: { color: '#9ca3af' }
-                            },
-                            x: {
-                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                                ticks: { color: '#9ca3af' }
-                            }
-                        }
-                    }
-                });
-            }
+            return weeklyData.slice(-8); // Last 8 weeks
         }
 
         function calculateStats() {
@@ -373,10 +754,33 @@
 
             const latest = snapshots[snapshots.length - 1];
             const oldest = snapshots[0];
+            const goal = parseInt(localStorage.getItem('follower_goal'), 10) || 0;
 
             const totalFollowerGrowth = latest.followerCount - oldest.followerCount;
             const totalFollowingGrowth = latest.followingCount - oldest.followingCount;
+            const daysSinceStart = Math.max(1, Math.round((new Date(latest.timestamp) - new Date(oldest.timestamp)) / (1000 * 60 * 60 * 24)));
 
+            // Average daily growth
+            const avgDailyGrowth = totalFollowerGrowth / daysSinceStart;
+            const avgWeeklyGrowth = avgDailyGrowth * 7;
+
+            // Calculate trajectory to goal
+            let daysToGoal = null;
+            let projectedDate = null;
+
+            if (goal > latest.followerCount && avgDailyGrowth > 0) {
+                const followersNeeded = goal - latest.followerCount;
+                daysToGoal = Math.ceil(followersNeeded / avgDailyGrowth);
+                projectedDate = new Date();
+                projectedDate.setDate(projectedDate.getDate() + daysToGoal);
+            }
+
+            // Weekly growth data
+            const weeklyGrowth = calculateWeeklyGrowth();
+            const bestWeek = weeklyGrowth.length > 0 ? Math.max(...weeklyGrowth.map(w => w.change)) : 0;
+            const worstWeek = weeklyGrowth.length > 0 ? Math.min(...weeklyGrowth.map(w => w.change)) : 0;
+
+            // Calculate ratio changes
             let avgFollowerChange = 0;
             let avgFollowingChange = 0;
 
@@ -391,27 +795,182 @@
 
             const currentRatio = (latest.followerCount / latest.followingCount).toFixed(2);
             const healthScore = currentRatio >= 1 ? 'Healthy' : 'Needs Work';
+            const goalProgress = goal > 0 ? Math.min(100, (latest.followerCount / goal) * 100) : 0;
 
             return {
+                currentFollowers: latest.followerCount,
+                currentFollowing: latest.followingCount,
                 totalFollowerGrowth,
                 totalFollowingGrowth,
                 avgFollowerChange,
                 avgFollowingChange,
+                avgWeeklyGrowth: Math.round(avgWeeklyGrowth),
                 currentRatio,
                 healthScore,
-                totalUploads: snapshots.length
+                totalUploads: snapshots.length,
+                goal,
+                goalProgress,
+                daysToGoal,
+                projectedDate,
+                bestWeek,
+                worstWeek,
+                weeklyGrowth
             };
+        }
+
+        function createCharts() {
+            const stats = calculateStats();
+            if (!stats) return;
+
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart.destroy?.());
+            charts = {};
+
+            Chart.defaults.color = '#a1a1a6';
+            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.06)';
+
+            // Growth Over Time Chart
+            const growthCtx = document.getElementById('growthChart');
+            if (growthCtx) {
+                const dates = snapshots.map(s => {
+                    const date = new Date(s.timestamp);
+                    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                });
+
+                charts.growth = new Chart(growthCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Followers',
+                                data: snapshots.map(s => s.followerCount),
+                                borderColor: '#DD2A7B',
+                                backgroundColor: 'rgba(221, 42, 123, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#DD2A7B'
+                            },
+                            {
+                                label: 'Following',
+                                data: snapshots.map(s => s.followingCount),
+                                borderColor: '#8134AF',
+                                backgroundColor: 'rgba(129, 52, 175, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointBackgroundColor: '#8134AF'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: { family: "'DM Sans', sans-serif" }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                                ticks: {
+                                    font: { family: "'DM Sans', sans-serif" },
+                                    callback: (value) => value.toLocaleString()
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: "'DM Sans', sans-serif" } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Weekly Growth Bar Chart
+            const weeklyCtx = document.getElementById('weeklyChart');
+            if (weeklyCtx && stats.weeklyGrowth.length > 0) {
+                const labels = stats.weeklyGrowth.map(w => {
+                    const date = new Date(w.week);
+                    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                });
+
+                charts.weekly = new Chart(weeklyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Weekly Change',
+                            data: stats.weeklyGrowth.map(w => w.change),
+                            backgroundColor: stats.weeklyGrowth.map(w =>
+                                w.change >= 0 ? 'rgba(50, 215, 75, 0.7)' : 'rgba(255, 69, 58, 0.7)'
+                            ),
+                            borderColor: stats.weeklyGrowth.map(w =>
+                                w.change >= 0 ? '#32D74B' : '#FF453A'
+                            ),
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                                ticks: {
+                                    font: { family: "'DM Sans', sans-serif" },
+                                    callback: (value) => (value >= 0 ? '+' : '') + value
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: "'DM Sans', sans-serif" } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Animate goal circle
+            const progressCircle = document.getElementById('goalProgress');
+            if (progressCircle && stats.goalProgress > 0) {
+                const circumference = 565.48;
+                const offset = circumference - (stats.goalProgress / 100) * circumference;
+                setTimeout(() => {
+                    progressCircle.style.strokeDashoffset = offset;
+                }, 100);
+            }
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
         function renderLoading() {
             return `
-                <div class="flex items-center justify-center min-h-[80vh]">
+                <div class="flex items-center justify-center" style="min-height: calc(100vh - 64px);">
                     <div class="text-center">
-                        <div class="relative w-16 h-16 mx-auto mb-6">
-                            <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
-                            <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
-                        </div>
-                        <p class="text-lg text-gray-400">Loading analytics...</p>
+                        <div class="spinner spinner-lg mx-auto mb-6"></div>
+                        <p class="text-secondary">Loading analytics...</p>
                     </div>
                 </div>
             `;
@@ -419,18 +978,16 @@
 
         function renderNoData() {
             return `
-                <div class="px-4 py-12 sm:px-6">
-                    <div class="max-w-lg mx-auto text-center">
-                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                            <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                <div style="padding: var(--space-6);">
+                    <div class="empty-state">
+                        <div class="empty-state__icon">
+                            <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                             </svg>
                         </div>
-                        <h1 class="text-2xl sm:text-3xl font-bold text-white mb-3">No Data Yet</h1>
-                        <p class="text-gray-400 mb-8">Upload your Instagram data to see analytics</p>
-                        <a href="upload.html" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 transition">
-                            Upload Data
-                        </a>
+                        <h2 class="empty-state__title">No Data Yet</h2>
+                        <p class="empty-state__description">Upload your Instagram data to see analytics and track your growth over time.</p>
+                        <a href="upload.html" class="btn btn-primary">Upload Data</a>
                     </div>
                 </div>
             `;
@@ -440,98 +997,225 @@
             const stats = calculateStats();
 
             return `
-                <div class="px-4 py-6 sm:px-6 sm:py-8">
-                    <div class="max-w-7xl mx-auto">
-                        <!-- Header -->
-                        <div class="mb-8">
-                            <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">Analytics</h1>
-                            <p class="text-gray-400 text-sm">Track your growth over time</p>
+                <div style="padding: var(--space-6); max-width: 80rem; margin: 0 auto;">
+                    <!-- Header -->
+                    <div class="mb-8 animate-fade-up">
+                        <h1 class="text-display" style="font-size: var(--text-3xl); margin-bottom: var(--space-2);">Analytics</h1>
+                        <p class="text-secondary">Track your growth and set goals</p>
+                    </div>
+
+                    <!-- Goal Tracker & Quick Stats -->
+                    <div class="grid gap-6 mb-8" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                        <!-- Goal Tracker Card -->
+                        <div class="glass-card animate-fade-up" style="padding: var(--space-6); animation-delay: 50ms; position: relative;">
+                            <button onclick="openGoalModal()" class="goal-edit-btn" title="Edit Goal">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                </svg>
+                            </button>
+
+                            <h3 class="text-display mb-4" style="font-size: var(--text-lg);">Goal Progress</h3>
+
+                            <div class="goal-tracker-layout">
+                                <div class="goal-circle">
+                                    <svg class="goal-circle__svg" viewBox="0 0 200 200">
+                                        <defs>
+                                            <linearGradient id="goalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#F58529"/>
+                                                <stop offset="50%" stop-color="#DD2A7B"/>
+                                                <stop offset="100%" stop-color="#8134AF"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <circle class="goal-circle__bg" cx="100" cy="100" r="90"/>
+                                        <circle class="goal-circle__progress" id="goalProgress" cx="100" cy="100" r="90"/>
+                                    </svg>
+                                    <div class="goal-circle__content">
+                                        <span class="goal-circle__percentage">${stats.goal > 0 ? Math.round(stats.goalProgress) : '—'}%</span>
+                                        <span class="goal-circle__label">${stats.goal > 0 ? 'of goal' : 'No goal set'}</span>
+                                    </div>
+                                </div>
+
+                                <div class="goal-tracker-info">
+                                    <div class="mb-4">
+                                        <p class="text-muted text-sm mb-1">Current</p>
+                                        <p class="text-display text-gradient" style="font-size: var(--text-2xl);" data-count="${stats.currentFollowers}">0</p>
+                                    </div>
+                                    <div class="mb-4">
+                                        <p class="text-muted text-sm mb-1">Goal</p>
+                                        <p class="text-primary font-semibold" style="font-size: var(--text-xl);">
+                                            ${stats.goal > 0 ? stats.goal.toLocaleString() : 'Not set'}
+                                        </p>
+                                    </div>
+                                    ${stats.projectedDate ? `
+                                        <div class="trajectory-badge">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                            </svg>
+                                            <span>On track for ${formatDate(stats.projectedDate)}</span>
+                                        </div>
+                                    ` : stats.goal > 0 && stats.goalProgress >= 100 ? `
+                                        <div class="badge badge-positive" style="font-size: var(--text-sm); padding: var(--space-2) var(--space-3);">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            Goal reached!
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Stats Grid -->
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                            <div class="stat-card rounded-2xl p-5">
-                                <p class="text-sm text-gray-400 mb-1">Total Growth</p>
-                                <p class="text-2xl sm:text-3xl font-bold ${stats.totalFollowerGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}">
-                                    ${stats.totalFollowerGrowth >= 0 ? '+' : ''}${stats.totalFollowerGrowth}
+                        <div class="grid gap-4" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="stat-card animate-fade-up" style="animation-delay: 100ms;">
+                                <p class="stat-card__label">Total Growth</p>
+                                <p class="stat-card__value ${stats.totalFollowerGrowth >= 0 ? '' : 'text-negative'}">
+                                    ${stats.totalFollowerGrowth >= 0 ? '+' : ''}${stats.totalFollowerGrowth.toLocaleString()}
                                 </p>
-                                <p class="text-xs text-gray-500 mt-1">Since first upload</p>
+                                <span class="badge ${stats.totalFollowerGrowth >= 0 ? 'badge-positive' : 'badge-negative'}">
+                                    Since start
+                                </span>
                             </div>
 
-                            <div class="stat-card rounded-2xl p-5">
-                                <p class="text-sm text-gray-400 mb-1">Avg Per Upload</p>
-                                <p class="text-2xl sm:text-3xl font-bold ${stats.avgFollowerChange >= 0 ? 'text-emerald-400' : 'text-red-400'}">
-                                    ${stats.avgFollowerChange >= 0 ? '+' : ''}${stats.avgFollowerChange}
+                            <div class="stat-card animate-fade-up" style="animation-delay: 150ms;">
+                                <p class="stat-card__label">Avg Weekly</p>
+                                <p class="stat-card__value ${stats.avgWeeklyGrowth >= 0 ? '' : 'text-negative'}">
+                                    ${stats.avgWeeklyGrowth >= 0 ? '+' : ''}${stats.avgWeeklyGrowth}
                                 </p>
-                                <p class="text-xs text-gray-500 mt-1">Followers per upload</p>
+                                <span class="badge badge-muted">Per week</span>
                             </div>
 
-                            <div class="stat-card rounded-2xl p-5">
-                                <p class="text-sm text-gray-400 mb-1">Current Ratio</p>
-                                <p class="text-2xl sm:text-3xl font-bold text-purple-400">${stats.currentRatio}</p>
-                                <p class="text-xs text-gray-500 mt-1">Followers/Following</p>
-                            </div>
-
-                            <div class="stat-card rounded-2xl p-5">
-                                <p class="text-sm text-gray-400 mb-1">Account Health</p>
-                                <p class="text-2xl sm:text-3xl font-bold ${stats.healthScore === 'Healthy' ? 'text-emerald-400' : 'text-orange-400'}">
+                            <div class="stat-card animate-fade-up" style="animation-delay: 200ms;">
+                                <p class="stat-card__label">Ratio</p>
+                                <p class="stat-card__value">${stats.currentRatio}</p>
+                                <span class="badge ${stats.currentRatio >= 1 ? 'badge-positive' : 'badge-warning'}">
                                     ${stats.healthScore}
-                                </p>
-                                <p class="text-xs text-gray-500 mt-1">${stats.totalUploads} data points</p>
+                                </span>
+                            </div>
+
+                            <div class="stat-card animate-fade-up" style="animation-delay: 250ms;">
+                                <p class="stat-card__label">Data Points</p>
+                                <p class="stat-card__value">${stats.totalUploads}</p>
+                                <span class="badge badge-muted">Uploads</span>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Charts -->
-                        <div class="space-y-6">
-                            <div class="glass-card rounded-2xl p-4 sm:p-6">
-                                <h3 class="text-lg font-semibold text-white mb-4">Growth Over Time</h3>
-                                <div style="height: 300px;">
-                                    <canvas id="followerChart"></canvas>
-                                </div>
-                            </div>
+                    <!-- Growth Chart -->
+                    <div class="glass-card mb-6 animate-fade-up" style="padding: var(--space-6); animation-delay: 300ms;">
+                        <h3 class="text-display mb-4" style="font-size: var(--text-lg);">Growth Over Time</h3>
+                        <div style="height: 300px;">
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                    </div>
 
-                            <div class="glass-card rounded-2xl p-4 sm:p-6">
-                                <h3 class="text-lg font-semibold text-white mb-4">Follower/Following Ratio</h3>
-                                <p class="text-sm text-gray-400 mb-4">Green = More followers than following</p>
-                                <div style="height: 250px;">
-                                    <canvas id="ratioChart"></canvas>
-                                </div>
+                    <!-- Weekly Growth Chart -->
+                    <div class="glass-card mb-6 animate-fade-up" style="padding: var(--space-6); animation-delay: 350ms;">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-display" style="font-size: var(--text-lg);">Weekly Growth</h3>
+                            <div class="flex gap-4">
+                                <span class="badge badge-positive">Best: +${stats.bestWeek}</span>
+                                <span class="badge badge-negative">Worst: ${stats.worstWeek}</span>
                             </div>
                         </div>
+                        <div style="height: 250px;">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
 
-                        <!-- Insights -->
-                        <div class="mt-6 glass-card rounded-2xl p-4 sm:p-6">
-                            <h3 class="text-lg font-semibold text-white mb-4">Quick Insights</h3>
-                            <div class="space-y-3">
-                                ${stats.totalFollowerGrowth > 0
-                                    ? `<div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        </div>
-                                        <p class="text-gray-300">You've gained <span class="text-emerald-400 font-semibold">${stats.totalFollowerGrowth}</span> followers overall - great growth!</p>
-                                    </div>`
-                                    : `<div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                            <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                        </div>
-                                        <p class="text-gray-300">You've lost <span class="text-orange-400 font-semibold">${Math.abs(stats.totalFollowerGrowth)}</span> followers - consider reviewing your content strategy.</p>
-                                    </div>`
-                                }
-                                ${stats.currentRatio >= 1
-                                    ? `<div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        </div>
-                                        <p class="text-gray-300">Your follower/following ratio is healthy at <span class="text-purple-400 font-semibold">${stats.currentRatio}</span></p>
-                                    </div>`
-                                    : `<div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        </div>
-                                        <p class="text-gray-300">You follow more people than follow you. Consider unfollowing accounts that don't follow back.</p>
-                                    </div>`
-                                }
-                            </div>
+                    <!-- Insights -->
+                    <div class="glass-card animate-fade-up" style="padding: var(--space-6); animation-delay: 400ms;">
+                        <h3 class="text-display mb-4" style="font-size: var(--text-lg);">Growth Insights</h3>
+                        <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                            ${stats.totalFollowerGrowth > 0 ? `
+                                <div class="insight-card">
+                                    <div class="insight-card__icon positive">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-primary font-medium">Growing Account</p>
+                                        <p class="text-secondary text-sm">You've gained ${stats.totalFollowerGrowth.toLocaleString()} followers since you started tracking.</p>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="insight-card">
+                                    <div class="insight-card__icon warning">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-primary font-medium">Follower Loss</p>
+                                        <p class="text-secondary text-sm">You've lost ${Math.abs(stats.totalFollowerGrowth).toLocaleString()} followers. Consider reviewing your content strategy.</p>
+                                    </div>
+                                </div>
+                            `}
+
+                            ${stats.currentRatio >= 1 ? `
+                                <div class="insight-card">
+                                    <div class="insight-card__icon positive">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-primary font-medium">Healthy Ratio</p>
+                                        <p class="text-secondary text-sm">Your follower/following ratio of ${stats.currentRatio} is healthy. Keep it up!</p>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="insight-card">
+                                    <div class="insight-card__icon info">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-primary font-medium">Improve Ratio</p>
+                                        <p class="text-secondary text-sm">You follow more than follow you back. Consider unfollowing non-followers.</p>
+                                    </div>
+                                </div>
+                            `}
+
+                            ${stats.avgWeeklyGrowth > 0 && stats.goal > stats.currentFollowers ? `
+                                <div class="insight-card">
+                                    <div class="insight-card__icon info">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-primary font-medium">Goal Trajectory</p>
+                                        <p class="text-secondary text-sm">At your current rate of +${stats.avgWeeklyGrowth}/week, you'll reach ${stats.goal.toLocaleString()} followers in ~${stats.daysToGoal} days.</p>
+                                    </div>
+                                </div>
+                            ` : stats.goal > 0 && stats.goalProgress >= 100 ? `
+                                <div class="insight-card">
+                                    <div class="insight-card__icon positive">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-primary font-medium">Goal Achieved!</p>
+                                        <p class="text-secondary text-sm">Congratulations! You've reached your goal. Set a new one to keep growing.</p>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="insight-card">
+                                    <div class="insight-card__icon info">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-primary font-medium">Set a Goal</p>
+                                        <p class="text-secondary text-sm">Click the edit button above to set a follower goal and track your progress.</p>
+                                    </div>
+                                </div>
+                            `}
                         </div>
                     </div>
                 </div>
@@ -549,7 +1233,7 @@
             }
         }
 
-        loadAllSnapshots();
+        init();
     </script>
 </body>
 </html>

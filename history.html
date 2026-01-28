@@ -3,221 +3,476 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Tracker - History</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'inter': ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <title>History | Instagram Tracker</title>
+    <link rel="stylesheet" href="styles/main.css">
     <style>
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-        body {
-            background: linear-gradient(135deg, #0f0a1f 0%, #1a1333 50%, #1e1245 100%);
-            min-height: 100vh;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .stat-card {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .nav-link {
+        /* Timeline Styles */
+        .timeline {
             position: relative;
-            transition: all 0.3s ease;
         }
-        .nav-link:hover {
-            color: #8b5cf6;
-        }
-        .nav-link.active::after {
+
+        .timeline::before {
             content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #8b5cf6, #ec4899);
-            border-radius: 2px;
-        }
-        .timeline-line {
             position: absolute;
             left: 7px;
             top: 24px;
             bottom: 0;
             width: 2px;
-            background: linear-gradient(to bottom, #8b5cf6, #ec4899);
+            background: var(--ig-gradient);
+            border-radius: var(--radius-full);
         }
+
+        .timeline-item {
+            position: relative;
+            padding-left: var(--space-10);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 20px;
+            width: 16px;
+            height: 16px;
+            border-radius: var(--radius-full);
+            border: 3px solid var(--bg-void);
+            z-index: 1;
+            transition: transform var(--duration-base) var(--ease-out-expo);
+        }
+
+        .timeline-dot.latest {
+            background: var(--color-positive);
+            box-shadow: 0 0 12px rgba(50, 215, 75, 0.5);
+        }
+
+        .timeline-dot.default {
+            background: var(--ig-pink);
+        }
+
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.2);
+        }
+
+        /* Change Cards */
+        .change-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-3);
+        }
+
+        .change-card.positive {
+            background: var(--color-positive-soft);
+            border-color: rgba(50, 215, 75, 0.2);
+        }
+
+        .change-card.negative {
+            background: var(--color-negative-soft);
+            border-color: rgba(255, 69, 58, 0.2);
+        }
+
+        /* Mini Stats */
+        .mini-stat {
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            padding: var(--space-3);
+            text-align: center;
+        }
+
+        .mini-stat.purple { background: rgba(129, 52, 175, 0.15); }
+        .mini-stat.pink { background: rgba(221, 42, 123, 0.15); }
+        .mini-stat.blue { background: rgba(81, 91, 212, 0.15); }
+        .mini-stat.muted { background: var(--bg-elevated); }
+
+        /* Mobile Nav Styles */
         .mobile-menu {
             display: none;
         }
+
         .mobile-nav {
             display: none;
         }
+
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--duration-base) var(--ease-out-expo);
+        }
+
+        .mobile-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-nav.open {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-deep);
+            z-index: 100;
+            padding: var(--space-6);
+            transform: translateX(0);
+            animation: slideInLeft var(--duration-slow) var(--ease-out-expo);
+        }
+
         @media (max-width: 768px) {
             .desktop-nav {
                 display: none;
             }
             .mobile-menu {
-                display: block;
+                display: flex;
             }
-            .mobile-nav.open {
-                display: block;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 80%;
-                max-width: 300px;
-                height: 100vh;
-                background: linear-gradient(180deg, #1a1333 0%, #0f0a1f 100%);
-                z-index: 100;
-                padding: 2rem;
+
+            .timeline::before {
+                left: 6px;
             }
-            .mobile-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
+
+            .timeline-dot {
+                width: 14px;
+                height: 14px;
+            }
+
+            .timeline-item {
+                padding-left: var(--space-8);
+            }
+        }
+
+        /* Mini Stats Grid */
+        .mini-stats-grid {
+            display: grid;
+            gap: var(--space-3);
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 640px) {
+            .mini-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .mini-stat {
+                padding: var(--space-2);
+            }
+
+            .mini-stat p.text-display {
+                font-size: var(--text-lg) !important;
+            }
+
+            .change-card {
+                padding: var(--space-2);
+            }
+
+            .summary-stats-grid {
+                grid-template-columns: 1fr !important;
+                gap: var(--space-3);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .timeline-item {
+                padding-left: var(--space-6);
+            }
+
+            .timeline::before {
+                left: 5px;
+            }
+
+            .timeline-dot {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--duration-base) var(--ease-out-expo);
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.95) translateY(10px);
+            transition: transform var(--duration-base) var(--ease-out-expo);
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: var(--text-base);
+            outline: none;
+            transition: border-color var(--duration-fast);
+        }
+
+        .modal-input:focus {
+            border-color: var(--ig-pink);
+        }
+
+        .modal-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Toast Styles */
+        .toast-container {
+            position: fixed;
+            top: var(--space-4);
+            right: var(--space-4);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .toast {
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-4);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            min-width: 280px;
+            max-width: 400px;
+            animation: slideInRight var(--duration-slow) var(--ease-out-expo);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.success { border-left: 3px solid var(--color-positive); }
+        .toast.error { border-left: 3px solid var(--color-negative); }
+        .toast.info { border-left: 3px solid var(--color-info); }
+
+        .toast-exit {
+            animation: slideOutRight var(--duration-base) var(--ease-out-expo) forwards;
+        }
+
+        @keyframes slideOutRight {
+            to {
                 opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.3s ease;
-            }
-            .mobile-overlay.open {
-                opacity: 1;
-                pointer-events: auto;
+                transform: translateX(100%);
             }
         }
-        ::-webkit-scrollbar {
-            width: 8px;
+
+        /* User List in Changes */
+        .user-list {
+            max-height: 100px;
+            overflow-y: auto;
         }
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
+
+        .user-list::-webkit-scrollbar {
+            width: 4px;
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.5);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.7);
+
+        .user-list::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: var(--radius-full);
         }
     </style>
 </head>
-<body class="text-white">
+<body>
     <!-- Mobile Overlay -->
     <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Navigation -->
     <nav class="mobile-nav" id="mobileNav">
         <div class="flex items-center justify-between mb-8">
-            <span class="text-xl font-bold gradient-text">Instagram Tracker</span>
-            <button onclick="closeMobileMenu()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <span class="text-display text-gradient" style="font-size: var(--text-xl);">Instagram Tracker</span>
+            <button onclick="closeMobileMenu()" class="btn-ghost btn-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
-        <div class="flex flex-col space-y-4">
-            <a href="index.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Dashboard</a>
-            <a href="analytics.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Analytics</a>
-            <a href="history.html" class="text-white font-medium py-2 px-4 rounded-lg bg-purple-600/20">History</a>
-            <a href="upload.html" class="text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-white/5">Upload</a>
+        <div class="flex flex-col gap-2">
+            <a href="index.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">Dashboard</a>
+            <a href="analytics.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">Analytics</a>
+            <a href="history.html" class="nav-link active" style="display: block; padding: var(--space-3) var(--space-4); background: var(--bg-elevated); border-radius: var(--radius-lg);">History</a>
+            <a href="upload.html" class="nav-link" style="display: block; padding: var(--space-3) var(--space-4);">Upload</a>
         </div>
     </nav>
 
     <!-- Header -->
-    <header class="glass-card border-t-0 border-l-0 border-r-0 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+    <header class="nav-header">
+        <div class="max-w-7xl mx-auto px-4" style="padding-left: var(--space-4); padding-right: var(--space-4);">
+            <div class="flex items-center justify-between" style="height: 64px;">
+                <div class="flex items-center gap-3">
+                    <div style="width: 36px; height: 36px; border-radius: var(--radius-lg); background: var(--ig-gradient); display: flex; align-items: center; justify-content: center;">
+                        <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
-                    <span class="text-lg font-bold text-white hidden sm:block">Instagram Tracker</span>
+                    <span class="text-display text-primary md:block hidden" style="font-size: var(--text-lg);">Instagram Tracker</span>
                 </div>
 
                 <!-- Desktop Navigation -->
-                <nav class="desktop-nav flex items-center space-x-1">
-                    <a href="index.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Dashboard</a>
-                    <a href="analytics.html" class="nav-link px-4 py-2 text-sm font-medium text-gray-400 rounded-lg">Analytics</a>
-                    <a href="history.html" class="nav-link active px-4 py-2 text-sm font-medium text-white rounded-lg">History</a>
-                    <a href="upload.html" class="ml-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition">Upload</a>
+                <nav class="desktop-nav flex items-center gap-1">
+                    <a href="index.html" class="nav-link">Dashboard</a>
+                    <a href="analytics.html" class="nav-link">Analytics</a>
+                    <a href="history.html" class="nav-link active">History</a>
+                    <a href="upload.html" class="btn btn-primary btn-sm" style="margin-left: var(--space-2);">Upload</a>
                 </nav>
 
                 <!-- Mobile Menu Button -->
-                <button class="mobile-menu p-2 text-gray-400 hover:text-white" onclick="openMobileMenu()">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                <button class="mobile-menu btn-ghost btn-icon" onclick="openMobileMenu()">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
             </div>
         </div>
     </header>
 
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Password Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-content">
+            <h3 class="text-display mb-4" style="font-size: var(--text-xl);">Enter Password</h3>
+            <p class="text-secondary mb-4" style="font-size: var(--text-sm);">This page is password protected.</p>
+            <input type="password" id="passwordInput" class="modal-input mb-4" placeholder="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+            <div class="flex gap-3">
+                <button onclick="submitPassword()" class="btn btn-primary flex-1">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
     <div id="app"></div>
 
     <script>
+        // ============================================
+        // INLINED COMPONENTS
+        // ============================================
+
+        // Toast Manager
+        const ToastManager = {
+            container: null,
+            init() {
+                this.container = document.getElementById('toastContainer');
+            },
+            show(message, type = 'info', duration = 4000) {
+                if (!this.container) this.init();
+
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+
+                const icons = {
+                    success: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+                    error: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+                    info: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                };
+
+                const iconColors = {
+                    success: 'var(--color-positive)',
+                    error: 'var(--color-negative)',
+                    info: 'var(--color-info)'
+                };
+
+                toast.innerHTML = `
+                    <span style="color: ${iconColors[type]}">${icons[type]}</span>
+                    <span style="color: var(--text-primary); font-size: var(--text-sm);">${message}</span>
+                `;
+
+                this.container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.classList.add('toast-exit');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            },
+            success(msg) { this.show(msg, 'success'); },
+            error(msg) { this.show(msg, 'error'); },
+            info(msg) { this.show(msg, 'info'); }
+        };
+
+        // ============================================
+        // MOBILE MENU
+        // ============================================
         function openMobileMenu() {
             document.getElementById('mobileNav').classList.add('open');
             document.getElementById('mobileOverlay').classList.add('open');
         }
+
         function closeMobileMenu() {
             document.getElementById('mobileNav').classList.remove('open');
             document.getElementById('mobileOverlay').classList.remove('open');
         }
-    </script>
 
-    <script type="module">
-        // Password Protection
+        // ============================================
+        // PASSWORD PROTECTION
+        // ============================================
         const CORRECT_PASSWORD = "chrisfit";
+        let passwordResolve = null;
 
         function checkPassword() {
             const storedPassword = sessionStorage.getItem('instagram_tracker_auth');
             if (storedPassword === CORRECT_PASSWORD) {
-                return true;
+                return Promise.resolve(true);
             }
 
-            const password = prompt("Enter password to access Instagram Tracker:");
+            return new Promise((resolve) => {
+                passwordResolve = resolve;
+                document.getElementById('passwordModal').classList.add('open');
+                document.getElementById('passwordInput').focus();
+            });
+        }
+
+        function submitPassword() {
+            const password = document.getElementById('passwordInput').value;
             if (password === CORRECT_PASSWORD) {
                 sessionStorage.setItem('instagram_tracker_auth', password);
-                return true;
-            } else if (password !== null) {
-                alert("Incorrect password!");
-                checkPassword();
+                document.getElementById('passwordModal').classList.remove('open');
+                if (passwordResolve) passwordResolve(true);
+            } else {
+                ToastManager.error('Incorrect password');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
             }
-            return false;
         }
 
-        if (!checkPassword()) {
-            document.body.innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-xl text-gray-400">Access Denied</p></div>';
-            throw new Error("Access denied");
-        }
+        document.getElementById('passwordInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitPassword();
+        });
+    </script>
 
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
         import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
@@ -236,6 +491,16 @@
 
         let snapshots = [];
         let isLoading = true;
+
+        async function init() {
+            const authenticated = await checkPassword();
+            if (!authenticated) {
+                document.getElementById('app').innerHTML = '<div class="flex items-center justify-center min-h-screen"><p class="text-secondary">Access Denied</p></div>';
+                return;
+            }
+
+            await loadAllSnapshots();
+        }
 
         async function loadAllSnapshots() {
             try {
@@ -256,6 +521,7 @@
                 console.error('Error loading snapshots:', error);
                 isLoading = false;
                 render();
+                ToastManager.error('Failed to load history');
             }
         }
 
@@ -276,15 +542,25 @@
             };
         }
 
+        function formatRelativeTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+            if (days === 0) return 'Today';
+            if (days === 1) return 'Yesterday';
+            if (days < 7) return `${days} days ago`;
+            if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+            if (days < 365) return `${Math.floor(days / 30)} months ago`;
+            return `${Math.floor(days / 365)} years ago`;
+        }
+
         function renderLoading() {
             return `
-                <div class="flex items-center justify-center min-h-[80vh]">
+                <div class="flex items-center justify-center" style="min-height: calc(100vh - 64px);">
                     <div class="text-center">
-                        <div class="relative w-16 h-16 mx-auto mb-6">
-                            <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
-                            <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
-                        </div>
-                        <p class="text-lg text-gray-400">Loading history...</p>
+                        <div class="spinner spinner-lg mx-auto mb-6"></div>
+                        <p class="text-secondary">Loading history...</p>
                     </div>
                 </div>
             `;
@@ -292,161 +568,197 @@
 
         function renderNoData() {
             return `
-                <div class="px-4 py-12 sm:px-6">
-                    <div class="max-w-lg mx-auto text-center">
-                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                            <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <div style="padding: var(--space-6);">
+                    <div class="empty-state">
+                        <div class="empty-state__icon">
+                            <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </div>
-                        <h1 class="text-2xl sm:text-3xl font-bold text-white mb-3">No History Yet</h1>
-                        <p class="text-gray-400 mb-8">Upload your Instagram data to start tracking history</p>
-                        <a href="upload.html" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 transition">
-                            Upload Data
-                        </a>
+                        <h2 class="empty-state__title">No History Yet</h2>
+                        <p class="empty-state__description">Upload your Instagram data to start tracking your history over time.</p>
+                        <a href="upload.html" class="btn btn-primary">Upload Data</a>
                     </div>
                 </div>
             `;
         }
 
         function renderHistory() {
+            const firstUpload = new Date(snapshots[snapshots.length - 1].timestamp);
+            const latestUpload = new Date(snapshots[0].timestamp);
+
             return `
-                <div class="px-4 py-6 sm:px-6 sm:py-8">
-                    <div class="max-w-4xl mx-auto">
-                        <!-- Header -->
-                        <div class="mb-8">
-                            <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">Upload History</h1>
-                            <p class="text-gray-400 text-sm">Complete timeline of all your uploads</p>
+                <div style="padding: var(--space-6); max-width: 56rem; margin: 0 auto;">
+                    <!-- Header -->
+                    <div class="mb-8 animate-fade-up">
+                        <h1 class="text-display" style="font-size: var(--text-3xl); margin-bottom: var(--space-2);">Upload History</h1>
+                        <p class="text-secondary">Complete timeline of all your data uploads</p>
+                    </div>
+
+                    <!-- Summary Stats -->
+                    <div class="summary-stats-grid grid gap-4 mb-8 animate-fade-up" style="grid-template-columns: repeat(3, 1fr); animation-delay: 50ms;">
+                        <div class="stat-card" style="text-align: center;">
+                            <p class="stat-card__value text-gradient">${snapshots.length}</p>
+                            <p class="stat-card__label">Total Uploads</p>
                         </div>
-
-                        <!-- Summary Stats -->
-                        <div class="grid grid-cols-3 gap-4 mb-8">
-                            <div class="stat-card rounded-2xl p-4 sm:p-5 text-center">
-                                <p class="text-2xl sm:text-3xl font-bold text-purple-400">${snapshots.length}</p>
-                                <p class="text-xs sm:text-sm text-gray-400 mt-1">Total Uploads</p>
-                            </div>
-                            <div class="stat-card rounded-2xl p-4 sm:p-5 text-center">
-                                <p class="text-sm sm:text-base font-bold text-white">${new Date(snapshots[snapshots.length - 1].timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                                <p class="text-xs sm:text-sm text-gray-400 mt-1">First Upload</p>
-                            </div>
-                            <div class="stat-card rounded-2xl p-4 sm:p-5 text-center">
-                                <p class="text-sm sm:text-base font-bold text-white">${new Date(snapshots[0].timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                                <p class="text-xs sm:text-sm text-gray-400 mt-1">Latest Upload</p>
-                            </div>
+                        <div class="stat-card" style="text-align: center;">
+                            <p class="text-primary font-semibold" style="font-size: var(--text-lg);">
+                                ${firstUpload.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                            <p class="stat-card__label">First Upload</p>
                         </div>
+                        <div class="stat-card" style="text-align: center;">
+                            <p class="text-primary font-semibold" style="font-size: var(--text-lg);">
+                                ${latestUpload.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                            <p class="stat-card__label">Latest Upload</p>
+                        </div>
+                    </div>
 
-                        <!-- Timeline -->
-                        <div class="space-y-6">
-                            ${snapshots.map((snapshot, index) => {
-                                const date = new Date(snapshot.timestamp);
-                                const formattedDate = date.toLocaleDateString('en-GB', {
-                                    weekday: 'short',
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric'
-                                });
-                                const formattedTime = date.toLocaleTimeString('en-GB', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                });
+                    <!-- Timeline -->
+                    <div class="timeline">
+                        ${snapshots.map((snapshot, index) => {
+                            const date = new Date(snapshot.timestamp);
+                            const formattedDate = date.toLocaleDateString('en-GB', {
+                                weekday: 'short',
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                            });
+                            const formattedTime = date.toLocaleTimeString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
 
-                                const previous = snapshots[index + 1];
-                                const changes = calculateChanges(snapshot, previous);
-                                const isLatest = index === 0;
+                            const previous = snapshots[index + 1];
+                            const changes = calculateChanges(snapshot, previous);
+                            const isLatest = index === 0;
+                            const relativeTime = formatRelativeTime(date);
 
-                                return `
-                                    <div class="relative pl-8">
-                                        ${index < snapshots.length - 1 ? '<div class="timeline-line"></div>' : ''}
-                                        <div class="absolute left-0 top-5 w-4 h-4 rounded-full ${isLatest ? 'bg-emerald-500' : 'bg-purple-500'} border-4 border-dark-900 z-10"></div>
+                            return `
+                                <div class="timeline-item mb-6 animate-fade-up" style="animation-delay: ${100 + index * 50}ms;">
+                                    <div class="timeline-dot ${isLatest ? 'latest' : 'default'}"></div>
 
-                                        <div class="glass-card rounded-2xl p-4 sm:p-6">
-                                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                                                <div>
-                                                    <h3 class="text-lg font-bold text-white">
+                                    <div class="glass-card glass-card-hover" style="padding: var(--space-5);">
+                                        <div class="flex items-start justify-between gap-4 mb-4">
+                                            <div>
+                                                <div class="flex items-center gap-3 mb-1">
+                                                    <h3 class="text-display text-primary" style="font-size: var(--text-lg);">
                                                         ${isLatest ? 'Latest Upload' : `Upload #${snapshots.length - index}`}
                                                     </h3>
-                                                    <p class="text-sm text-gray-400">${formattedDate} at ${formattedTime}</p>
-                                                </div>
-                                                ${isLatest ? '<span class="inline-flex px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-medium">Current</span>' : ''}
-                                            </div>
-
-                                            <!-- Stats Grid -->
-                                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                                                <div class="bg-purple-500/10 rounded-xl p-3">
-                                                    <p class="text-xs text-gray-400">Followers</p>
-                                                    <p class="text-xl font-bold text-purple-400">${snapshot.followerCount.toLocaleString()}</p>
-                                                    ${changes ? `
-                                                        <p class="text-xs ${changes.followerChange >= 0 ? 'text-emerald-400' : 'text-red-400'}">
-                                                            ${changes.followerChange >= 0 ? '+' : ''}${changes.followerChange}
-                                                        </p>
+                                                    ${isLatest ? `
+                                                        <span class="badge badge-positive">Current</span>
                                                     ` : ''}
                                                 </div>
-                                                <div class="bg-pink-500/10 rounded-xl p-3">
-                                                    <p class="text-xs text-gray-400">Following</p>
-                                                    <p class="text-xl font-bold text-pink-400">${snapshot.followingCount.toLocaleString()}</p>
-                                                    ${changes ? `
-                                                        <p class="text-xs ${changes.followingChange >= 0 ? 'text-emerald-400' : 'text-red-400'}">
-                                                            ${changes.followingChange >= 0 ? '+' : ''}${changes.followingChange}
-                                                        </p>
-                                                    ` : ''}
-                                                </div>
-                                                <div class="bg-blue-500/10 rounded-xl p-3">
-                                                    <p class="text-xs text-gray-400">Ratio</p>
-                                                    <p class="text-xl font-bold text-blue-400">
-                                                        ${(snapshot.followerCount / snapshot.followingCount).toFixed(2)}
-                                                    </p>
-                                                </div>
-                                                <div class="bg-white/5 rounded-xl p-3">
-                                                    <p class="text-xs text-gray-400">Net</p>
-                                                    <p class="text-xl font-bold text-gray-300">
-                                                        ${(snapshot.followerCount - snapshot.followingCount).toLocaleString()}
-                                                    </p>
-                                                </div>
+                                                <p class="text-muted text-sm">${formattedDate} at ${formattedTime}</p>
                                             </div>
-
-                                            ${changes && (changes.newFollowers.length > 0 || changes.unfollowers.length > 0) ? `
-                                                <div class="border-t border-white/5 pt-4">
-                                                    <p class="text-sm font-medium text-gray-300 mb-3">Changes from previous:</p>
-                                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                        ${changes.newFollowers.length > 0 ? `
-                                                            <div class="bg-emerald-500/10 rounded-xl p-3">
-                                                                <p class="text-sm font-medium text-emerald-400 mb-2">New Followers (${changes.newFollowers.length})</p>
-                                                                <div class="space-y-1 max-h-24 overflow-y-auto">
-                                                                    ${changes.newFollowers.slice(0, 5).map(u => `
-                                                                        <p class="text-xs text-gray-300">@${u}</p>
-                                                                    `).join('')}
-                                                                    ${changes.newFollowers.length > 5 ? `
-                                                                        <p class="text-xs text-gray-500">+${changes.newFollowers.length - 5} more</p>
-                                                                    ` : ''}
-                                                                </div>
-                                                            </div>
-                                                        ` : ''}
-
-                                                        ${changes.unfollowers.length > 0 ? `
-                                                            <div class="bg-red-500/10 rounded-xl p-3">
-                                                                <p class="text-sm font-medium text-red-400 mb-2">Unfollowers (${changes.unfollowers.length})</p>
-                                                                <div class="space-y-1 max-h-24 overflow-y-auto">
-                                                                    ${changes.unfollowers.slice(0, 5).map(u => `
-                                                                        <p class="text-xs text-gray-300">@${u}</p>
-                                                                    `).join('')}
-                                                                    ${changes.unfollowers.length > 5 ? `
-                                                                        <p class="text-xs text-gray-500">+${changes.unfollowers.length - 5} more</p>
-                                                                    ` : ''}
-                                                                </div>
-                                                            </div>
-                                                        ` : ''}
-                                                    </div>
-                                                </div>
-                                            ` : !changes ? `
-                                                <div class="border-t border-white/5 pt-4">
-                                                    <p class="text-sm text-gray-500 italic">This was your first upload</p>
-                                                </div>
-                                            ` : ''}
+                                            <span class="badge badge-muted">${relativeTime}</span>
                                         </div>
+
+                                        <!-- Mini Stats Grid -->
+                                        <div class="mini-stats-grid mb-4">
+                                            <div class="mini-stat purple">
+                                                <p class="text-muted text-xs mb-1">Followers</p>
+                                                <p class="text-display text-primary" style="font-size: var(--text-xl);">
+                                                    ${snapshot.followerCount.toLocaleString()}
+                                                </p>
+                                                ${changes ? `
+                                                    <p class="text-xs font-medium ${changes.followerChange >= 0 ? 'text-positive' : 'text-negative'}">
+                                                        ${changes.followerChange >= 0 ? '+' : ''}${changes.followerChange}
+                                                    </p>
+                                                ` : ''}
+                                            </div>
+                                            <div class="mini-stat pink">
+                                                <p class="text-muted text-xs mb-1">Following</p>
+                                                <p class="text-display text-primary" style="font-size: var(--text-xl);">
+                                                    ${snapshot.followingCount.toLocaleString()}
+                                                </p>
+                                                ${changes ? `
+                                                    <p class="text-xs font-medium ${changes.followingChange <= 0 ? 'text-positive' : 'text-warning'}">
+                                                        ${changes.followingChange >= 0 ? '+' : ''}${changes.followingChange}
+                                                    </p>
+                                                ` : ''}
+                                            </div>
+                                            <div class="mini-stat blue">
+                                                <p class="text-muted text-xs mb-1">Ratio</p>
+                                                <p class="text-display text-primary" style="font-size: var(--text-xl);">
+                                                    ${(snapshot.followerCount / snapshot.followingCount).toFixed(2)}
+                                                </p>
+                                            </div>
+                                            <div class="mini-stat muted">
+                                                <p class="text-muted text-xs mb-1">Net</p>
+                                                <p class="text-display text-primary" style="font-size: var(--text-xl);">
+                                                    ${(snapshot.followerCount - snapshot.followingCount).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        ${changes && (changes.newFollowers.length > 0 || changes.unfollowers.length > 0) ? `
+                                            <div style="border-top: 1px solid var(--glass-border); padding-top: var(--space-4);">
+                                                <p class="text-sm font-medium text-secondary mb-3">Changes from previous upload</p>
+                                                <div class="grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                                                    ${changes.newFollowers.length > 0 ? `
+                                                        <div class="change-card positive">
+                                                            <div class="flex items-center gap-2 mb-2">
+                                                                <svg width="16" height="16" fill="none" stroke="var(--color-positive)" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                                                </svg>
+                                                                <p class="text-sm font-medium text-positive">New Followers (${changes.newFollowers.length})</p>
+                                                            </div>
+                                                            <div class="user-list">
+                                                                ${changes.newFollowers.slice(0, 5).map(u => `
+                                                                    <p class="text-xs text-secondary py-0.5">@${u}</p>
+                                                                `).join('')}
+                                                                ${changes.newFollowers.length > 5 ? `
+                                                                    <p class="text-xs text-muted py-0.5">+${changes.newFollowers.length - 5} more</p>
+                                                                ` : ''}
+                                                            </div>
+                                                        </div>
+                                                    ` : ''}
+
+                                                    ${changes.unfollowers.length > 0 ? `
+                                                        <div class="change-card negative">
+                                                            <div class="flex items-center gap-2 mb-2">
+                                                                <svg width="16" height="16" fill="none" stroke="var(--color-negative)" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                                                </svg>
+                                                                <p class="text-sm font-medium text-negative">Lost Followers (${changes.unfollowers.length})</p>
+                                                            </div>
+                                                            <div class="user-list">
+                                                                ${changes.unfollowers.slice(0, 5).map(u => `
+                                                                    <p class="text-xs text-secondary py-0.5">@${u}</p>
+                                                                `).join('')}
+                                                                ${changes.unfollowers.length > 5 ? `
+                                                                    <p class="text-xs text-muted py-0.5">+${changes.unfollowers.length - 5} more</p>
+                                                                ` : ''}
+                                                            </div>
+                                                        </div>
+                                                    ` : ''}
+                                                </div>
+                                            </div>
+                                        ` : !changes ? `
+                                            <div style="border-top: 1px solid var(--glass-border); padding-top: var(--space-4);">
+                                                <p class="text-muted text-sm flex items-center gap-2">
+                                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    This was your first upload - baseline established
+                                                </p>
+                                            </div>
+                                        ` : `
+                                            <div style="border-top: 1px solid var(--glass-border); padding-top: var(--space-4);">
+                                                <p class="text-muted text-sm flex items-center gap-2">
+                                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    No follower changes detected since previous upload
+                                                </p>
+                                            </div>
+                                        `}
                                     </div>
-                                `;
-                            }).join('')}
-                        </div>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -463,7 +775,7 @@
             }
         }
 
-        loadAllSnapshots();
+        init();
     </script>
 </body>
 </html>
