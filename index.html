@@ -1125,7 +1125,10 @@
                     isLoading = false;
                     render();
 
-                    setTimeout(() => AnimatedCounter.initAll(), 100);
+                    setTimeout(() => {
+                        AnimatedCounter.initAll();
+                        window.scrollTo(0, 0);
+                    }, 100);
 
                 } catch (error) {
                     console.error('Error loading data:', error);
