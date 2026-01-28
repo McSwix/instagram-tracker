@@ -821,17 +821,21 @@
                 return modal;
             },
             close() {
-                if (!this.activeModal) return;
-                this.overlay.style.opacity = '0';
-                this.overlay.style.visibility = 'hidden';
-                this.activeModal.style.opacity = '0';
-                this.activeModal.style.transform = 'translate(-50%, -50%) scale(0.9)';
-                setTimeout(() => {
-                    if (this.activeModal) {
-                        this.activeModal.remove();
-                        this.activeModal = null;
-                    }
-                }, 300);
+                if (this.overlay) {
+                    this.overlay.style.opacity = '0';
+                    this.overlay.style.visibility = 'hidden';
+                }
+                if (this.activeModal) {
+                    const modalToRemove = this.activeModal;
+                    modalToRemove.style.opacity = '0';
+                    modalToRemove.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                    this.activeModal = null;
+                    setTimeout(() => {
+                        if (modalToRemove && modalToRemove.parentNode) {
+                            modalToRemove.remove();
+                        }
+                    }, 300);
+                }
             }
         };
 
