@@ -499,6 +499,7 @@
             if (password === CORRECT_PASSWORD) {
                 sessionStorage.setItem('instagram_tracker_auth', password);
                 document.getElementById('passwordModal').classList.remove('open');
+                window.scrollTo(0, 0);
                 if (passwordResolve) passwordResolve(true);
             } else {
                 ToastManager.error('Incorrect password');

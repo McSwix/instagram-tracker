@@ -366,10 +366,10 @@
 
         .mobile-nav {
             position: fixed;
-            top: 0;
+            top: 64px;
             left: 0;
             width: 280px;
-            height: 100vh;
+            height: calc(100vh - 64px);
             background: var(--bg-surface);
             border-right: 1px solid var(--glass-border);
             z-index: 95;
@@ -1038,6 +1038,7 @@
                 if (password === CORRECT_PASSWORD) {
                     sessionStorage.setItem('instagram_tracker_auth', password);
                     Modal.close();
+                    window.scrollTo(0, 0);
                     return true;
                 } else {
                     ToastManager.error('Incorrect password. Please try again.');
